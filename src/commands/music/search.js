@@ -26,7 +26,6 @@ module.exports = new ChatInputCommand({
   },
   // eslint-disable-next-line sonarjs/cognitive-complexity
   run: async (client, interaction) => {
-    const player = useMainPlayer();
     const { emojis } = client.container;
     const {
       member, guild, options
@@ -40,17 +39,44 @@ module.exports = new ChatInputCommand({
     await interaction.deferReply();
 
     try {
-      // Check is valid
-      const searchResult = await player
-        .search(query, { requestedBy: interaction.user })
-        .catch(() => null);
-      if (!searchResult.hasTracks()) {
-        interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
-        return;
+      let tracks = [];
+      
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
+        if (!node) {
+          interaction.editReply(`${ emojis.error } ${ member }, no Lavalink nodes are connected. Please try again later.`);
+          return;
+        }
+
+        const result = await node.rest.resolve(query.startsWith('http') ? query : `ytsearch:${query}`);
+        
+        if (!result || (result.loadType === 'empty' || result.loadType === 'error')) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          return;
+        }
+
+        tracks = result.data || [];
+        if (result.loadType === 'playlist' && result.data.tracks) {
+          tracks = result.data.tracks;
+        }
+        
+        if (tracks.length === 0) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          return;
+        }
+      } else {
+        const player = useMainPlayer();
+        const searchResult = await player
+          .search(query, { requestedBy: interaction.user })
+          .catch(() => null);
+        if (!searchResult || !searchResult.hasTracks()) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          return;
+        }
+        tracks = searchResult.toJSON().tracks;
       }
 
       // Ok, display the search results!
-      const { tracks } = searchResult.toJSON();
       const usableCtx = [];
       const chunkSize = 10;
       for (let i = 0; i < tracks.length; i += chunkSize) {
@@ -63,13 +89,24 @@ module.exports = new ChatInputCommand({
             iconURL: guild.iconURL({ dynamic: true })
           });
 
-        // Resolve string output
-        const chunkOutput = chunk.map((e, ind) => queueTrackCb(e, ind + i)).join('\n');
+        // Resolve string output for both Lavalink and discord-player formats
+        const isLavalink = process.env.USE_LAVALINK === 'true' && client.lavalink;
+        const chunkOutput = chunk.map((e, ind) => {
+          if (isLavalink) {
+            const title = e.info?.title || 'Unknown';
+            const author = e.info?.author || 'Unknown';
+            const uri = e.info?.uri || '';
+            return `**${ind + i + 1}.** [${title}](${uri}) - \`${author}\``;
+          } else {
+            return queueTrackCb(e, ind + i);
+          }
+        }).join('\n');
 
         // Construct our embed
+        const thumbnail = isLavalink ? chunk[0]?.info?.artworkUrl : chunk[0]?.thumbnail;
         embed
           .setDescription(chunkOutput ?? 'No results')
-          .setImage(chunk[0]?.thumbnail)
+          .setImage(thumbnail)
           .setFooter({ text: `Page ${ Math.ceil((i + chunkSize) / chunkSize) } of ${
             Math.ceil(tracks.length / chunkSize)
           } (${ i + 1 }-${ Math.min(i + chunkSize, tracks.length) } / ${ tracks.length })\nClick any of the numbered buttons to directly play a song` });
@@ -83,7 +120,7 @@ module.exports = new ChatInputCommand({
           if (!rows[rowIndex]) rows[rowIndex] = new ActionRowBuilder();
           const row = rows[rowIndex];
 
-          const { url } = track;
+          const url = isLavalink ? (track.info?.uri || '') : (track.url || '');
           row.addComponents(
             new ButtonBuilder()
               .setCustomId(`@play-button@${ member.id }@${ url.slice(0, (
