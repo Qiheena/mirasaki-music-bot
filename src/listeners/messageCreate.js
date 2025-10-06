@@ -4,6 +4,14 @@ const { getGuildSettings } = require('../modules/db');
 const { getPermissionLevel } = require('../handlers/permissions');
 const { clientConfig } = require('../util');
 
+const scheduleAutoDelete = (msg, settings) => {
+  if (!settings.autoDeleteDuration || settings.autoDeleteDuration <= 0) return;
+  
+  setTimeout(() => {
+    msg.delete().catch(() => {});
+  }, settings.autoDeleteDuration * 1000);
+};
+
 module.exports = async (client, message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
@@ -46,7 +54,13 @@ module.exports = async (client, message) => {
   }
 
   let command = commands.get(commandName);
-  if (!command) return;
+  if (!command) {
+    const aliasCommand = Array.from(commands.values()).find(cmd => 
+      cmd.aliases && cmd.aliases.includes(commandName)
+    );
+    if (!aliasCommand) return;
+    command = aliasCommand;
+  }
 
   const actualCommandName = command.isAlias && command.aliasFor ? command.aliasFor : commandName;
   if (command.isAlias && command.aliasFor) {
@@ -97,6 +111,9 @@ module.exports = async (client, message) => {
         const roleId = mention.replace(/[<@&>]/g, '');
         return guild.roles.cache.get(roleId) || null;
       },
+      getAttachment: (name) => {
+        return message.attachments.first() || null;
+      },
       data: []
     },
     reply: async (payload) => {
@@ -105,7 +122,12 @@ module.exports = async (client, message) => {
       const components = payload.components || [];
       const files = payload.files || [];
       
-      return await message.reply({ content, embeds, components, files });
+      const reply = await message.reply({ content, embeds, components, files });
+      
+      const settings = getGuildSettings(guild.id);
+      scheduleAutoDelete(reply, settings);
+      
+      return reply;
     },
     editReply: async (payload) => {
       const sent = await message.channel.messages.fetch({ limit: 1 });
@@ -113,13 +135,21 @@ module.exports = async (client, message) => {
       if (lastMessage && lastMessage.author.id === client.user.id) {
         return await lastMessage.edit(payload);
       }
-      return await message.reply(payload);
+      const reply = await message.reply(payload);
+      const settings = getGuildSettings(guild.id);
+      scheduleAutoDelete(reply, settings);
+      return reply;
     },
     deferReply: async () => {
       await message.channel.sendTyping();
     },
     followUp: async (payload) => {
-      return await message.channel.send(payload);
+      const followUpMsg = await message.channel.send(payload);
+      
+      const settings = getGuildSettings(guild.id);
+      scheduleAutoDelete(followUpMsg, settings);
+      
+      return followUpMsg;
     },
     isCommand: () => true,
     isChatInputCommand: () => true

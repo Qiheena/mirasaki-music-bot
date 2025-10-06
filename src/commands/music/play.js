@@ -166,7 +166,7 @@ module.exports = new ChatInputCommand({
                   const searchQuery = `${queue.current.info.author} ${queue.current.info.title}`;
                   const result = await node.rest.resolve(`ytsearch:${searchQuery}`);
                   
-                  if (result && result.loadType === 'search' && result.data.length > 1) {
+                  if (result && result.data && result.data.length > 1) {
                     const recommendedTrack = result.data[1];
                     nextTrack = {
                       track: recommendedTrack.encoded,

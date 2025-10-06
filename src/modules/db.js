@@ -67,7 +67,8 @@ const getGuildSettings = (guildId) => {
       leaveOnEmpty: clientConfig.defaultLeaveOnEmpty,
       leaveOnEmptyCooldown: clientConfig.defaultLeaveOnEmptyCooldown,
       djRoleIds: [],
-      equalizer: 'null'
+      equalizer: 'null',
+      autoDeleteDuration: 30
     });
     settings = guilds.by('guildId', guildId);
   }
@@ -125,6 +126,11 @@ const getGuildSettings = (guildId) => {
     needsUpdate = true;
   }
 
+  if (typeof settings.autoDeleteDuration === 'undefined') {
+    settings.autoDeleteDuration = 30;
+    needsUpdate = true;
+  }
+
   // Only update and save once if any changes were made
   if (needsUpdate) {
     guilds.update(settings);
@@ -132,7 +138,6 @@ const getGuildSettings = (guildId) => {
     process.nextTick(() => saveDb());
   }
 
-  if (process.env.NODE_ENV !== 'production') console.dir(settings);
   return settings;
 };
 
