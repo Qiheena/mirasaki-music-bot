@@ -378,13 +378,12 @@ const getPaginationComponents = (pageNow, pageTotal, prevCustomId, nextCustomId,
 };
 
 const formatBotMessage = (content, options = {}) => {
-  const pinkColor = 0xFFC0CB;
-  const emoji = '😊';
+  const pinkColor = 0xFF69B4;
   
   if (typeof content === 'string') {
     return {
       embeds: [{
-        description: `${emoji} ${content}`,
+        description: content,
         color: pinkColor
       }],
       ...options
@@ -394,8 +393,7 @@ const formatBotMessage = (content, options = {}) => {
   if (content.embeds && Array.isArray(content.embeds)) {
     content.embeds = content.embeds.map(embed => ({
       ...embed,
-      description: embed.description ? `${emoji} ${embed.description}` : `${emoji}`,
-      color: pinkColor
+      color: embed.color || pinkColor
     }));
     return content;
   }
@@ -404,7 +402,7 @@ const formatBotMessage = (content, options = {}) => {
     return {
       ...content,
       embeds: [{
-        description: `${emoji} ${content.content}`,
+        description: content.content,
         color: pinkColor
       }],
       content: undefined
