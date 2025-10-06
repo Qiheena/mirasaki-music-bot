@@ -31,27 +31,51 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      const queue = useQueue(guild.id);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        
+        // Not enough songs in queue
+        if (!queue || queue.tracks.length < 1) {
+          interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any remove action - this command has been cancelled`);
+          return;
+        }
 
-      // Not enough songs in queue
-      if ((queue?.size ?? 0) < 2) {
-        interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any move action - this command has been cancelled`);
-        return;
+        // Check bounds/constraints
+        const queueSizeZeroOffset = queue.tracks.length - 1;
+        if (songPosition > queueSizeZeroOffset) {
+          interaction.reply(`${ emojis.error } ${ member }, the \`${
+            SONG_POSITION_OPTION_ID + '` parameter is'
+          } not within valid range of 1-${ queue.tracks.length } - this command has been cancelled`);
+          return;
+        }
+
+        // Remove song
+        const track = queue.tracks[songPosition];
+        queue.tracks.splice(songPosition, 1);
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ track.info.title }\`** has been removed from the queue`);
+      } else {
+        const queue = useQueue(guild.id);
+
+        // Not enough songs in queue
+        if ((queue?.size ?? 0) < 2) {
+          interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any move action - this command has been cancelled`);
+          return;
+        }
+
+        // Check bounds/constraints
+        const queueSizeZeroOffset = queue.size - 1;
+        if (songPosition > queueSizeZeroOffset) {
+          interaction.reply(`${ emojis.error } ${ member }, the \`${
+            SONG_POSITION_OPTION_ID + '` parameter is'
+          } not within valid range of 1-${ queue.size } - this command has been cancelled`);
+          return;
+        }
+
+        // Remove song - assign track before #removeTrack
+        const track = queue.tracks.data.at(songPosition);
+        queue.removeTrack(songPosition);
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ track.title }\`** has been removed from the queue`);
       }
-
-      // Check bounds/constraints
-      const queueSizeZeroOffset = queue.size - 1;
-      if (songPosition > queueSizeZeroOffset) {
-        interaction.reply(`${ emojis.error } ${ member }, the \`${
-          SONG_POSITION_OPTION_ID + '` parameter is'
-        } not within valid range of 1-${ queue.size } - this command has been cancelled`);
-        return;
-      }
-
-      // Remove song - assign track before #removeTrack
-      const track = queue.tracks.data.at(songPosition);
-      queue.removeTrack(songPosition);
-      interaction.reply(`${ emojis.success } ${ member }, **\`${ track.title }\`** has been removed from the queue`);
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

@@ -29,24 +29,48 @@ module.exports = new ChatInputCommand({
     // Check state
     if (!requireSessionConditions(interaction, true)) return;
 
-    // Check has queue
-    const queue = useQueue(guild.id);
-    if (queue.isEmpty()) {
-      interaction.reply(`${ emojis.error } ${ member }, queue is currently empty - this command has been cancelled`);
-      return;
-    }
-
-    // Check bounds
-    const queueSizeZeroOffset = queue.size - 1;
-    if (jumpToIndex > queueSizeZeroOffset) {
-      interaction.reply(`${ emojis.error } ${ member }, there is nothing at track position ${ jumpToIndex + 1 }, the highest position is ${ queue.size } - this command has been cancelled`);
-      return;
-    }
-
-    // Try to jump to new position/queue
     try {
-      queue.node.jump(jumpToIndex);
-      await interaction.reply(`${ emojis.success } ${ member }, jumping to **\`${ jumpToIndex + 1 }\`**!`);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        const player = client.players.get(guild.id);
+        
+        if (!queue || queue.tracks.length === 0) {
+          interaction.reply(`${ emojis.error } ${ member }, queue is currently empty - this command has been cancelled`);
+          return;
+        }
+
+        // Check bounds
+        const queueSizeZeroOffset = queue.tracks.length - 1;
+        if (jumpToIndex > queueSizeZeroOffset) {
+          interaction.reply(`${ emojis.error } ${ member }, there is nothing at track position ${ jumpToIndex + 1 }, the highest position is ${ queue.tracks.length } - this command has been cancelled`);
+          return;
+        }
+
+        // Jump to track - move tracks before jumpToIndex to end of queue (if loop is queue)
+        const targetTrack = queue.tracks[jumpToIndex];
+        queue.current = targetTrack;
+        queue.tracks.splice(jumpToIndex, 1);
+        
+        await player.stopTrack();
+        await interaction.reply(`${ emojis.success } ${ member }, jumping to **\`${ targetTrack.info.title }\`**!`);
+      } else {
+        // Check has queue
+        const queue = useQueue(guild.id);
+        if (queue.isEmpty()) {
+          interaction.reply(`${ emojis.error } ${ member }, queue is currently empty - this command has been cancelled`);
+          return;
+        }
+
+        // Check bounds
+        const queueSizeZeroOffset = queue.size - 1;
+        if (jumpToIndex > queueSizeZeroOffset) {
+          interaction.reply(`${ emojis.error } ${ member }, there is nothing at track position ${ jumpToIndex + 1 }, the highest position is ${ queue.size } - this command has been cancelled`);
+          return;
+        }
+
+        queue.node.jump(jumpToIndex);
+        await interaction.reply(`${ emojis.success } ${ member }, jumping to **\`${ jumpToIndex + 1 }\`**!`);
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

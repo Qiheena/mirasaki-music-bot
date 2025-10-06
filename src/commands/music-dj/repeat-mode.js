@@ -52,28 +52,53 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction)) return;
 
     try {
-      const queue = useQueue(interaction.guild.id);
-      if (!queue) {
-        interaction.reply({ content: `${ emojis.error } ${ member }, no music is being played - initialize a session with \`/play\` first and try again, this command has been cancelled` });
-        return;
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        if (!queue) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no music is being played - initialize a session with \`/play\` first and try again, this command has been cancelled` });
+          return;
+        }
+
+        // Map repeat modes: 0=off, 1=track, 2=queue, 3=autoplay
+        const loopModes = ['off', 'track', 'queue', 'off'];
+        queue.loop = loopModes[repeatMode];
+        const modeEmoji = repeatModeEmoji(repeatMode);
+
+        // Save for persistency
+        if (shouldSave) {
+          const guilds = db.getCollection('guilds');
+          const settings = getGuildSettings(guild.id);
+          settings.repeatMode = repeatMode;
+          guilds.update(settings);
+          saveDb();
+        }
+
+        // Feedback
+        interaction.reply({ content: `${ emojis.success } ${ member }, updated repeat mode to: ${ modeEmoji }` });
+      } else {
+        const queue = useQueue(interaction.guild.id);
+        if (!queue) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no music is being played - initialize a session with \`/play\` first and try again, this command has been cancelled` });
+          return;
+        }
+
+        // Resolve repeat mode
+        queue.setRepeatMode(repeatMode);
+        const modeEmoji = repeatModeEmoji(repeatMode);
+
+        // Save for persistency
+        if (shouldSave) {
+          // Perform and notify collection that the document has changed
+          const guilds = db.getCollection('guilds');
+          const settings = getGuildSettings(guild.id);
+          settings.repeatMode = repeatMode;
+          guilds.update(settings);
+          saveDb();
+        }
+
+        // Feedback
+        interaction.reply({ content: `${ emojis.success } ${ member }, updated repeat mode to: ${ modeEmoji }` });
       }
-
-      // Resolve repeat mode
-      queue.setRepeatMode(repeatMode);
-      const modeEmoji = repeatModeEmoji(repeatMode);
-
-      // Save for persistency
-      if (shouldSave) {
-        // Perform and notify collection that the document has changed
-        const guilds = db.getCollection('guilds');
-        const settings = getGuildSettings(guild.id);
-        settings.repeatMode = repeatMode;
-        guilds.update(settings);
-        saveDb();
-      }
-
-      // Feedback
-      interaction.reply({ content: `${ emojis.success } ${ member }, updated repeat mode to: ${ modeEmoji }` });
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

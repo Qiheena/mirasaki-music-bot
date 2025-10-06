@@ -41,41 +41,78 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      const queue = useQueue(guild.id);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        
+        // Not enough songs in queue
+        if (!queue || queue.tracks.length < 2) {
+          interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any move action - this command has been cancelled`);
+          return;
+        }
 
-      // Not enough songs in queue
-      if ((queue?.size ?? 0) < 2) {
-        interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any move action - this command has been cancelled`);
-        return;
-      }
-
-      // Check bounds/constraints
-      const queueSizeZeroOffset = queue.size - 1;
-      if (
-        fromPosition > queueSizeZeroOffset
-        || toPosition > queueSizeZeroOffset
-      ) {
-        interaction.reply(`${ emojis.error } ${ member }, the \`${
+        // Check bounds/constraints
+        const queueSizeZeroOffset = queue.tracks.length - 1;
+        if (
           fromPosition > queueSizeZeroOffset
-            ? toPosition > queueSizeZeroOffset
-              ? `${ FROM_OPTION_ID } and ${ TO_OPTION_ID }\` parameters are both`
-              : FROM_OPTION_ID + '` parameter is'
-            : TO_OPTION_ID + '` parameter is'
-        } not within valid range of 1-${ queue.size } - this command has been cancelled`);
-        return;
-      }
+          || toPosition > queueSizeZeroOffset
+        ) {
+          interaction.reply(`${ emojis.error } ${ member }, the \`${
+            fromPosition > queueSizeZeroOffset
+              ? toPosition > queueSizeZeroOffset
+                ? `${ FROM_OPTION_ID } and ${ TO_OPTION_ID }\` parameters are both`
+                : FROM_OPTION_ID + '` parameter is'
+              : TO_OPTION_ID + '` parameter is'
+          } not within valid range of 1-${ queue.tracks.length } - this command has been cancelled`);
+          return;
+        }
 
-      // Is same
-      if (fromPosition === toPosition) {
-        interaction.reply(`${ emojis.error } ${ member }, \`${ FROM_OPTION_ID }\` and \`${ TO_OPTION_ID }\` are identical - this command has been cancelled`);
-        return;
-      }
+        // Is same
+        if (fromPosition === toPosition) {
+          interaction.reply(`${ emojis.error } ${ member }, \`${ FROM_OPTION_ID }\` and \`${ TO_OPTION_ID }\` are identical - this command has been cancelled`);
+          return;
+        }
 
-      // Swap src and dest
-      queue.moveTrack(fromPosition, toPosition);
-      // use toPosition, because it's after #swap
-      const firstTrack = queue.tracks.data.at(toPosition);
-      interaction.reply(`${ emojis.success } ${ member }, **\`${ firstTrack.title }\`** has been moved to position **\`${ toPosition + 1 }\`**`);
+        // Move track
+        const track = queue.tracks.splice(fromPosition, 1)[0];
+        queue.tracks.splice(toPosition, 0, track);
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ track.info.title }\`** has been moved to position **\`${ toPosition + 1 }\`**`);
+      } else {
+        const queue = useQueue(guild.id);
+
+        // Not enough songs in queue
+        if ((queue?.size ?? 0) < 2) {
+          interaction.reply(`${ emojis.error } ${ member }, not enough songs in queue to perform any move action - this command has been cancelled`);
+          return;
+        }
+
+        // Check bounds/constraints
+        const queueSizeZeroOffset = queue.size - 1;
+        if (
+          fromPosition > queueSizeZeroOffset
+          || toPosition > queueSizeZeroOffset
+        ) {
+          interaction.reply(`${ emojis.error } ${ member }, the \`${
+            fromPosition > queueSizeZeroOffset
+              ? toPosition > queueSizeZeroOffset
+                ? `${ FROM_OPTION_ID } and ${ TO_OPTION_ID }\` parameters are both`
+                : FROM_OPTION_ID + '` parameter is'
+              : TO_OPTION_ID + '` parameter is'
+          } not within valid range of 1-${ queue.size } - this command has been cancelled`);
+          return;
+        }
+
+        // Is same
+        if (fromPosition === toPosition) {
+          interaction.reply(`${ emojis.error } ${ member }, \`${ FROM_OPTION_ID }\` and \`${ TO_OPTION_ID }\` are identical - this command has been cancelled`);
+          return;
+        }
+
+        // Swap src and dest
+        queue.moveTrack(fromPosition, toPosition);
+        // use toPosition, because it's after #swap
+        const firstTrack = queue.tracks.data.at(toPosition);
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ firstTrack.title }\`** has been moved to position **\`${ toPosition + 1 }\`**`);
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
