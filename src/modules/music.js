@@ -97,7 +97,7 @@ const requireSessionConditions = (
   requireDJRole = true // Explicit set to false for public commands
 ) => {
   // Destructure
-  const { guild, member } = interaction;
+  const { guild, member, client } = interaction;
 
   // Return early
   if (!requireMusicChannel(interaction)) return false;
@@ -120,13 +120,18 @@ const requireSessionConditions = (
   // Check is playing in different channel
   // Essentially makes sure a shared voice connection is required
   // when playing/applicable
-  const queue = useQueue(guild.id);
-  if (queue && queue.channel.id !== channel.id) {
-    interaction.reply({
-      content: `${ emojis.error } ${ member }, I'm already playing in <#${ queue.channel.id }> - this command has been cancelled`,
-      ephemeral: true
-    });
-    return false;
+  const isLavalink = process.env.USE_LAVALINK === 'true' && client.lavalink;
+  const queue = isLavalink ? client.queues?.get(guild.id) : useQueue(guild.id);
+  
+  if (queue) {
+    const queueChannelId = isLavalink ? queue.metadata?.voiceChannel?.id : queue.channel.id;
+    if (queueChannelId && queueChannelId !== channel.id) {
+      interaction.reply({
+        content: `${ emojis.error } ${ member }, I'm already playing in <#${ queueChannelId }> - this command has been cancelled`,
+        ephemeral: true
+      });
+      return false;
+    }
   }
 
   // Check if we can initialize the voice state/channel join
@@ -139,15 +144,18 @@ const requireSessionConditions = (
   ) return false;
 
   // No queue
-  else if (
-    requireVoiceSession === true
-    && !usePlayer(guild.id)?.queue
-  ) {
-    interaction.reply({
-      content: `${ emojis.error } ${ member }, no music is currently being played - \`/play\` something first to initialize a session`,
-      ephemeral: true
-    });
-    return false;
+  else if (requireVoiceSession === true) {
+    const hasSession = isLavalink 
+      ? (client.players?.get(guild.id) && client.queues?.get(guild.id))
+      : usePlayer(guild.id)?.queue;
+    
+    if (!hasSession) {
+      interaction.reply({
+        content: `${ emojis.error } ${ member }, no music is currently being played - \`/play\` something first to initialize a session`,
+        ephemeral: true
+      });
+      return false;
+    }
   }
 
   // Ok, continue
@@ -157,7 +165,7 @@ const requireSessionConditions = (
 // eslint-disable-next-line sonarjs/cognitive-complexity
 const requireMusicChannel = (interaction) => {
   const {
-    guild, channel, member
+    guild, channel, member, client
   } = interaction;
   const settings = getGuildSettings(guild.id);
   const { musicChannelIds } = settings;
@@ -170,13 +178,16 @@ const requireMusicChannel = (interaction) => {
     settings.useThreadSessions === true
     && settings.threadSessionStrictCommandChannel === true
   ) {
-    const queue = useQueue(guild.id);
+    const isLavalink = process.env.USE_LAVALINK === 'true' && client.lavalink;
+    const queue = isLavalink ? client.queues?.get(guild.id) : useQueue(guild.id);
+    const queueChannelId = queue?.metadata?.channel?.id;
+    
     if (
       (!queue && !musicChannelIds.includes(channel.id))
-      || (queue && channel.id !== queue.metadata.channel.id)
+      || (queue && channel.id !== queueChannelId)
     ) {
       const output = `${ emojis.error } ${ member }, please use music commands in the dedicated music session channel <#${ queue
-        ? queue.metadata.channel.id
+        ? queueChannelId
         : musicChannelIds[0]
       }>`;
       const outputMultipleChannels = `${ emojis.error } ${ member }, please use music commands in one of the dedicated music session channels: ${
