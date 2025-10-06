@@ -23,6 +23,14 @@ module.exports = new ComponentCommand({
           return interaction.reply(`${ emojis.error } ${ member }, no previous track in history`);
         }
 
+        if (queue.currentMessage) {
+          try {
+            await queue.currentMessage.delete().catch(() => {});
+          } catch (e) {
+          }
+          queue.currentMessage = null;
+        }
+
         await player.playTrack({ track: { encoded: prevTrack.track } });
         await interaction.reply(`${ emojis.success } ${ member }, playing previous track: **\`${ prevTrack.info.title }\`**`);
       } else {

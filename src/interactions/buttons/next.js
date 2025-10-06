@@ -19,6 +19,15 @@ module.exports = new ComponentCommand({
         }
         
         const currentTrackTitle = queue.current.info.title;
+        
+        if (queue.currentMessage) {
+          try {
+            await queue.currentMessage.delete().catch(() => {});
+          } catch (e) {
+          }
+          queue.currentMessage = null;
+        }
+        
         await player.stopTrack();
         await interaction.reply(`${ emojis.success } ${ member }, skipped **\`${ currentTrackTitle }\`**`);
       } else {

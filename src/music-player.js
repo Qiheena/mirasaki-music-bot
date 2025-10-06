@@ -10,6 +10,16 @@ const { createMusicControlButtons } = require('./modules/music-buttons');
 module.exports = (player) => {
   // this event is emitted whenever discord-player starts to play a track
   player.events.on('playerStart', async (queue, track) => {
+    if (queue.metadata.messages && queue.metadata.messages.length > 0) {
+      for (const message of queue.metadata.messages) {
+        try {
+          await message.delete().catch(() => {});
+        } catch (e) {
+        }
+      }
+      queue.metadata.messages = [];
+    }
+
     const embed = new EmbedBuilder()
       .setColor(0xFF69B4)
       .setDescription([
