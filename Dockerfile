@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:23-slim
 
 # Create app/working/bot directory
 RUN mkdir -p /app
@@ -21,5 +21,8 @@ COPY . ./
 # Optional API/Backend port
 EXPOSE 3000
 
-# Run the start command
-CMD [ "npm", "run", "start" ]
+# Set NODE_ENV to production
+ENV NODE_ENV=production
+
+# Run the start command with optimizations
+CMD [ "node", "--max-old-space-size=512", "src/index.js" ]

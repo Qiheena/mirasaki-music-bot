@@ -103,7 +103,7 @@ module.exports = new ChatInputCommand({
               inline: true
             }
           ],
-          footer: { text: `Made with ❤️ by Mirasaki#0001 ${ emojis.separator } Open to collaborate ${ emojis.separator } me@mirasaki.dev` }
+          footer: { text: `Made with ❤️ by RasaVedic#0001 ${ emojis.separator } Open to collaborate ${ emojis.separator } me@RasaVedic.dev` }
         }
       ]
     });

@@ -377,6 +377,43 @@ const getPaginationComponents = (pageNow, pageTotal, prevCustomId, nextCustomId,
   ];
 };
 
+const formatBotMessage = (content, options = {}) => {
+  const pinkColor = 0xFFC0CB;
+  const emoji = '😊';
+  
+  if (typeof content === 'string') {
+    return {
+      embeds: [{
+        description: `${emoji} ${content}`,
+        color: pinkColor
+      }],
+      ...options
+    };
+  }
+  
+  if (content.embeds && Array.isArray(content.embeds)) {
+    content.embeds = content.embeds.map(embed => ({
+      ...embed,
+      description: embed.description ? `${emoji} ${embed.description}` : `${emoji}`,
+      color: pinkColor
+    }));
+    return content;
+  }
+  
+  if (content.content) {
+    return {
+      ...content,
+      embeds: [{
+        description: `${emoji} ${content.content}`,
+        color: pinkColor
+      }],
+      content: undefined
+    };
+  }
+  
+  return content;
+};
+
 module.exports = {
   clientConfig,
   splitCamelCaseStr,
@@ -395,5 +432,6 @@ module.exports = {
   handlePaginationButtons,
   dynamicInteractionReplyFn,
   handlePagination,
-  getPaginationComponents
+  getPaginationComponents,
+  formatBotMessage
 };

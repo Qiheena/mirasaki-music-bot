@@ -2,7 +2,7 @@ const logger = require('@mirasaki/logger');
 const chalk = require('chalk');
 const { getGuildSettings } = require('../modules/db');
 const { getPermissionLevel } = require('../handlers/permissions');
-const { clientConfig } = require('../util');
+const { clientConfig, formatBotMessage } = require('../util');
 
 const scheduleAutoDelete = (msg, settings) => {
   if (!settings.autoDeleteDuration || settings.autoDeleteDuration <= 0) return;
@@ -69,6 +69,57 @@ module.exports = async (client, message) => {
 
   const permLevel = getPermissionLevel(clientConfig, member, channel);
 
+  const subcommand = args[0] && command.data.options?.find(opt => opt.type === 1 && opt.name === args[0].toLowerCase());
+  const effectiveOptions = subcommand ? subcommand.options : command.data.options;
+  const effectiveArgs = subcommand ? args.slice(1) : args;
+  
+  const getArgByOption = (name, type) => {
+    if (!effectiveOptions) {
+      if (type === 'string') return effectiveArgs.join(' ') || null;
+      if (type === 'integer') {
+        const value = parseInt(effectiveArgs[0]);
+        return Number.isNaN(value) ? null : value;
+      }
+      if (type === 'boolean') {
+        const val = effectiveArgs[0]?.toLowerCase();
+        if (val === 'true' || val === 'yes' || val === '1') return true;
+        if (val === 'false' || val === 'no' || val === '0') return false;
+        return null;
+      }
+      return null;
+    }
+    
+    const option = effectiveOptions.find(opt => opt.name === name);
+    if (!option) return null;
+    
+    const index = effectiveOptions.indexOf(option);
+    
+    if (type === 'string') {
+      if (option.type === 3) {
+        const hasMoreOptions = index < effectiveOptions.length - 1;
+        if (!hasMoreOptions) {
+          return effectiveArgs.slice(index).join(' ') || null;
+        }
+        return effectiveArgs[index] || null;
+      }
+      return effectiveArgs[index] || null;
+    }
+    
+    if (type === 'integer') {
+      const value = parseInt(effectiveArgs[index]);
+      return Number.isNaN(value) ? null : value;
+    }
+    
+    if (type === 'boolean') {
+      const value = effectiveArgs[index]?.toLowerCase();
+      if (value === 'true' || value === 'yes' || value === '1') return true;
+      if (value === 'false' || value === 'no' || value === '0') return false;
+      return null;
+    }
+    
+    return effectiveArgs[index] || null;
+  };
+  
   const mockInteraction = {
     type: 2,
     commandName: actualCommandName,
@@ -79,34 +130,35 @@ module.exports = async (client, message) => {
     user: author,
     client,
     options: {
-      getString: (name) => {
-        const value = args.join(' ');
-        return value || null;
+      getSubcommand: () => {
+        return subcommand ? subcommand.name : null;
       },
-      getInteger: (name) => {
-        const value = parseInt(args[0]);
-        return isNaN(value) ? null : value;
+      getString: (name, required = false) => {
+        const value = getArgByOption(name, 'string');
+        return value !== null ? value : (required ? '' : null);
       },
-      getBoolean: (name) => {
-        const value = args[0]?.toLowerCase();
-        if (value === 'true' || value === 'yes' || value === '1') return true;
-        if (value === 'false' || value === 'no' || value === '0') return false;
-        return null;
+      getInteger: (name, required = false) => {
+        const value = getArgByOption(name, 'integer');
+        return value !== null ? value : (required ? 0 : null);
+      },
+      getBoolean: (name, required = false) => {
+        const value = getArgByOption(name, 'boolean');
+        return value !== null ? value : (required ? false : null);
       },
       getUser: (name) => {
-        const mention = args[0];
+        const mention = getArgByOption(name, 'string');
         if (!mention) return null;
         const userId = mention.replace(/[<@!>]/g, '');
         return guild.members.cache.get(userId)?.user || null;
       },
       getChannel: (name) => {
-        const mention = args[0];
+        const mention = getArgByOption(name, 'string');
         if (!mention) return null;
         const channelId = mention.replace(/[<#>]/g, '');
         return guild.channels.cache.get(channelId) || null;
       },
       getRole: (name) => {
-        const mention = args[0];
+        const mention = getArgByOption(name, 'string');
         if (!mention) return null;
         const roleId = mention.replace(/[<@&>]/g, '');
         return guild.roles.cache.get(roleId) || null;
@@ -117,12 +169,8 @@ module.exports = async (client, message) => {
       data: []
     },
     reply: async (payload) => {
-      const content = typeof payload === 'string' ? payload : payload.content;
-      const embeds = payload.embeds || [];
-      const components = payload.components || [];
-      const files = payload.files || [];
-      
-      const reply = await message.reply({ content, embeds, components, files });
+      const formatted = formatBotMessage(payload);
+      const reply = await message.reply(formatted);
       
       const settings = getGuildSettings(guild.id);
       scheduleAutoDelete(reply, settings);
@@ -130,12 +178,13 @@ module.exports = async (client, message) => {
       return reply;
     },
     editReply: async (payload) => {
+      const formatted = formatBotMessage(payload);
       const sent = await message.channel.messages.fetch({ limit: 1 });
       const lastMessage = sent.first();
       if (lastMessage && lastMessage.author.id === client.user.id) {
-        return await lastMessage.edit(payload);
+        return await lastMessage.edit(formatted);
       }
-      const reply = await message.reply(payload);
+      const reply = await message.reply(formatted);
       const settings = getGuildSettings(guild.id);
       scheduleAutoDelete(reply, settings);
       return reply;
@@ -144,7 +193,8 @@ module.exports = async (client, message) => {
       await message.channel.sendTyping();
     },
     followUp: async (payload) => {
-      const followUpMsg = await message.channel.send(payload);
+      const formatted = formatBotMessage(payload);
+      const followUpMsg = await message.channel.send(formatted);
       
       const settings = getGuildSettings(guild.id);
       scheduleAutoDelete(followUpMsg, settings);

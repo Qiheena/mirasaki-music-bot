@@ -1,13 +1,13 @@
-<p align="center"><img src="assets/logo.png" alt="Mirasaki Music Bot Logo" height="60" style="border-radius:50px"/></p>
-<h1 align="center">Mirasaki Music Bot</h1>
+<p align="center"><img src="assets/logo.png" alt="RasaVedic Music Bot Logo" height="60" style="border-radius:50px"/></p>
+<h1 align="center">RasaVedic Music Bot</h1>
 <div align='center'>
 
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
-![build](https://img.shields.io/github/actions/workflow/status/mirasaki/mirasaki-music-bot/test.yml)
-[![CodeFactor](https://www.codefactor.io/repository/github/mirasaki/mirasaki-music-bot/badge)](https://www.codefactor.io/repository/github/mirasaki/mirasaki-music-bot)
+![build](https://img.shields.io/github/actions/workflow/status/RasaVedic/RasaVedic-music-bot/test.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/RasaVedic/RasaVedic-music-bot/badge)](https://www.codefactor.io/repository/github/RasaVedic/RasaVedic-music-bot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Docker Pulls](https://img.shields.io/docker/pulls/mirasaki/mirasaki-music-bot)
-![version](https://img.shields.io/github/v/release/Mirasaki/mirasaki-music-bot)
+![Docker Pulls](https://img.shields.io/docker/pulls/RasaVedic/RasaVedic-music-bot)
+![version](https://img.shields.io/github/v/release/RasaVedic/RasaVedic-music-bot)
 
 </div>
 <p align="center">
@@ -33,13 +33,13 @@
 <br />
 <h2 align="center">⭐ It's free, open-source, and self-host - meaning you're in full control</h2>
 <p align="center">
-  This project was created and open-sourced by <a href="https://mirasaki.dev" target="_blank">Mirasaki Development</a>. That means it's publicly available for anyone to grab and use in any way you want (MIT licensed). This project will never be monetized, every feature will always be free. All we need to keep adding new functionality and modules is some GitHub stars. Join the absolute <strong>legends</strong> below by clicking that Star button in the top-right of your screen, it doesn't cost you anything <strong>and</strong> means the world to us ❤️
+  This project was created and open-sourced by <a href="https://RasaVedic.dev" target="_blank">RasaVedic Development</a>. That means it's publicly available for anyone to grab and use in any way you want (MIT licensed). This project will never be monetized, every feature will always be free. All we need to keep adding new functionality and modules is some GitHub stars. Join the absolute <strong>legends</strong> below by clicking that Star button in the top-right of your screen, it doesn't cost you anything <strong>and</strong> means the world to us ❤️
 </p>
 <br />
 
 <div align='center'>
 
-[![Stargazers repo roster for @Mirasaki/mirasaki-music-bot](https://reporoster.com/stars/Mirasaki/mirasaki-music-bot)](https://github.com/Mirasaki/mirasaki-music-bot/stargazers)
+[![Stargazers repo roster for @RasaVedic/RasaVedic-music-bot](https://reporoster.com/stars/RasaVedic/RasaVedic-music-bot)](https://github.com/RasaVedic/RasaVedic-music-bot/stargazers)
 </div>
 <br />
 <br/>
@@ -120,7 +120,7 @@
 <br/>
 <h2 id="demo">🎁 Demo</h2>
 
-Don't take our word for it, though. Instead, you should just see for yourself in our [support server](https://discord.gg/mirasaki).
+Don't take our word for it, though. Instead, you should just see for yourself in our [support server](https://discord.gg/RasaVedic).
 
 <br/>
 <h2 id="installation-and-usage">🔨 Installation & Usage</h2>
@@ -151,20 +151,20 @@ The quickest and easiest way to host/use this bot is by deploying it inside of a
 
 > *A [**docker compose**](https://docs.docker.com/compose/ "View docker compose documentation") file is included for your convenience*
 
-1. Clone this repository: `git clone https://github.com/Mirasaki/mirasaki-music-bot.git`
-2. Navigate inside the new folder: `cd mirasaki-music-bot`
+1. Clone this repository: `git clone https://github.com/RasaVedic/RasaVedic-music-bot.git`
+2. Navigate inside the new folder: `cd RasaVedic-music-bot`
 3. Rename `/.env.example` to `.env` and provide your environmental variables
     - Windows users often experience issues with this file, if you're getting errors that the env file can't be found, or `Expected path argument to be of type string` - check out [this timestamped video](https://youtu.be/6rOCUZ8opLM?t=42)
 4. Rename [`/config.example.js`](/config.example.js "View config.example.js file in current repository") to `config.js` (required) and go through your bot configuration (optional)
-5. Build the project: `docker build --tag mirasaki-music-bot .`
-6. Start the bot: `docker run -it --env-file .env --name my-mirasaki-music-bot mirasaki-music-bot`
+5. Build the project: `docker build --tag RasaVedic-music-bot .`
+6. Start the bot: `docker run -it --env-file .env --name my-RasaVedic-music-bot RasaVedic-music-bot`
 
 ### Run as a plain NodeJS app
 
 You can also clone this repository or download a release, and host the project directly. You will need [Node/NodeJS](https://nodejs.org/en/ "Node official website") (Be sure to check the box that says "Automatically install the necessary tools" when you're running the installation wizard)
 
-1. Head over to [the download page](https://github.com/Mirasaki/mirasaki-music-bot/releases/)
-    - Alternatively, clone this repository by using `git clone https://github.com/Mirasaki/mirasaki-music-bot.git` and skip to step 4 if you have [Git](https://git-scm.com/downloads "Git Download Section") installed
+1. Head over to [the download page](https://github.com/RasaVedic/RasaVedic-music-bot/releases/)
+    - Alternatively, clone this repository by using `git clone https://github.com/RasaVedic/RasaVedic-music-bot.git` and skip to step 4 if you have [Git](https://git-scm.com/downloads "Git Download Section") installed
 2. Download either the `zip` or `zip.gz` source code
 3. Extract it using [your favorite zip tool](https://www.rarlab.com/download.htm "It's WinRar, duh")
 4. Open a new console/terminal/shell window in the newly created project folder
@@ -260,7 +260,7 @@ All configuration is done in `/config.js`. Multiple Discord servers are supporte
   },
 
   // The Discord server invite to your Support server
-  supportServerInviteLink: 'https://discord.gg/mirasaki',
+  supportServerInviteLink: 'https://discord.gg/RasaVedic',
 
   // Additional permissions that are considered required when generating
   // the bot invite link with /invite
@@ -319,13 +319,13 @@ module.exports = new ChatInputCommand({
 <br />
 <h2 id="support">Support</h2>
 
-Join our [support server](https://discord.gg/mirasaki) if you need any further assistance, have feature suggestion or have any other feedback
+Join our [support server](https://discord.gg/RasaVedic) if you need any further assistance, have feature suggestion or have any other feedback
 
-[![banner](https://invidget.switchblade.xyz/mirasaki)](https://discord.gg/mirasaki)
+[![banner](https://invidget.switchblade.xyz/RasaVedic)](https://discord.gg/RasaVedic)
 
 <br />
 
 > Open source, self-hosted, and MIT licensed, meaning you're in full control.
 
 <br/>  
-<p align="center"><a href="https://github.com/Mirasaki/mirasaki-music-bot#mirasaki-music-bot"><img src="http://randojs.com/images/backToTopButton.png" alt="Back to top" height="29"/></a></p>
+<p align="center"><a href="https://github.com/RasaVedic/RasaVedic-music-bot#RasaVedic-music-bot"><img src="http://randojs.com/images/backToTopButton.png" alt="Back to top" height="29"/></a></p>

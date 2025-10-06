@@ -1,5 +1,5 @@
 {
-  "name": "mirasaki-music-bot",
+  "name": "rasavedic-music-bot",
   "description": "A free, open-source JavaScript music bot with full Lavalink v4 support, featuring 60+ commands, autoplay, sleep timer, history tracking, and advanced queue management",
   "version": "1.4.0",
   "main": "src/index.js",
@@ -8,24 +8,24 @@
     "dev": "nodemon run node --trace-warnings .",
     "test": "node . mode=test",
     "commit": "cz",
-    "docker:build": "docker build --tag mirasaki-music-bot .",
-    "docker:shell": "docker run -it --rm mirasaki-music-bot sh",
-    "docker:start": "docker run -it -p 3000:3000 --env-file ./.env -d --name mirasaki-music-bot mirasaki-music-bot",
-    "docker:restart": "docker restart mirasaki-music-bot",
-    "docker:stop": "docker stop mirasaki-music-bot",
-    "docker:kill": "docker rm -f mirasaki-music-bot",
-    "docker:purge": "docker rm -fv mirasaki-music-bot",
-    "docker:logs": "docker logs mirasaki-music-bot -f",
-    "docker:image": "docker image tag mirasaki-music-bot mirasaki/mirasaki-music-bot",
-    "docker:push": "docker push mirasaki/mirasaki-music-bot",
+    "docker:build": "docker build --tag rasavedic-music-bot .",
+    "docker:shell": "docker run -it --rm rasavedic-music-bot sh",
+    "docker:start": "docker run -it -p 3000:3000 --env-file ./.env -d --name rasavedic-music-bot rasavedic-music-bot",
+    "docker:restart": "docker restart rasavedic-music-bot",
+    "docker:stop": "docker stop rasavedic-music-bot",
+    "docker:kill": "docker rm -f rasavedic-music-bot",
+    "docker:purge": "docker rm -fv rasavedic-music-bot",
+    "docker:logs": "docker logs rasavedic-music-bot -f",
+    "docker:image": "docker image tag rasavedic-music-bot RasaVedic/rasavedic-music-bot",
+    "docker:push": "docker push RasaVedic/rasavedic-music-bot",
     "docker:update": "git pull && npm install && npm run docker:stop && npm run docker:kill && npm run docker:build && npm run docker:start",
-    "docker:dev:build": "docker build --tag mirasaki-music-bot-dev -f ./.devcontainer/.Dockerfile .",
-    "docker:dev:start": "docker run -it --rm -v $(pwd):/app -v /app/node_modules -p 3000:3000 -p 9229:9229 -w /app mirasaki-music-bot-dev",
-    "pm2:start": "pm2 start --name=mirasaki-music-bot npm -- run start",
-    "pm2:stop": "pm2 stop mirasaki-music-bot",
-    "pm2:purge": "pm2 stop mirasaki-music-bot && pm2 delete mirasaki-music-bot && pm2 reset mirasaki-music-bot",
-    "pm2:logs": "pm2 logs --lines 300 mirasaki-music-bot",
-    "pm2:logsError": "pm2 logs --err --lines 300 mirasaki-music-bot",
+    "docker:dev:build": "docker build --tag rasavedic-music-bot-dev -f ./.devcontainer/.Dockerfile .",
+    "docker:dev:start": "docker run -it --rm -v $(pwd):/app -v /app/node_modules -p 3000:3000 -p 9229:9229 -w /app rasavedic-music-bot-dev",
+    "pm2:start": "pm2 start --name=rasavedic-music-bot npm -- run start",
+    "pm2:stop": "pm2 stop rasavedic-music-bot",
+    "pm2:purge": "pm2 stop rasavedic-music-bot && pm2 delete rasavedic-music-bot && pm2 reset rasavedic-music-bot",
+    "pm2:logs": "pm2 logs --lines 300 rasavedic-music-bot",
+    "pm2:logsError": "pm2 logs --err --lines 300 rasavedic-music-bot",
     "lint": "eslint src",
     "linter": "eslint src --fix",
     "writeLinter": "eslint src --output-file linter-output.txt"
@@ -37,11 +37,11 @@
     "chalk": "^4.1.2",
     "common-tags": "^1.8.2",
     "discord-player": "^6.7.1",
-    "discord.js": "^14.16.3",
+    "discord.js": "^14.17.1",
     "dotenv": "^16.4.7",
     "lokijs": "^1.5.12",
     "mediaplex": "^1.0.0",
-    "shoukaku": "^4.1.1"
+    "shoukaku": "^4.2.0"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
@@ -52,14 +52,14 @@
     "@semantic-release/release-notes-generator": "^14.0.1",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^8.56.0",
+    "eslint": "^9.18.0",
     "eslint-plugin-sonarjs": "^3.0.1",
-    "nodemon": "^3.1.7",
+    "nodemon": "^3.1.9",
     "semantic-release": "^24.2.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Mirasaki/mirasaki-music-bot.git"
+    "url": "git+https://github.com/RasaVedic/rasavedic-music-bot.git"
   },
   "keywords": [
     "nodejs",
@@ -88,12 +88,12 @@
     "select-menus",
     "documented"
   ],
-  "author": "Richard Hillebrand (Mirasaki)",
+  "author": "RasaVedic",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Mirasaki/mirasaki-music-bot/issues"
+    "url": "https://github.com/RasaVedic/rasavedic-music-bot/issues"
   },
-  "homepage": "https://github.com/Mirasaki/mirasaki-music-bot#readme",
+  "homepage": "https://github.com/RasaVedic/rasavedic-music-bot#readme",
   "optionalDependencies": {
     "fsevents": "^2.3.3"
   },
@@ -104,6 +104,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=20.0.0 <23.0.0"
+    "node": ">=20.0.0 <24.0.0"
   }
 }

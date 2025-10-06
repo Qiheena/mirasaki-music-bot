@@ -1,4 +1,4 @@
-# Mirasaki Music Bot
+# RasaVedic Music Bot
 
 ## Overview
 
