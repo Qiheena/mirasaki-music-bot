@@ -1,10 +1,10 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # Create app/working/bot directory
 RUN mkdir -p /app
 WORKDIR /app
 
-# Install ffmpeg for audio processing
+# Install ffmpeg for audio processing (required for Lavalink compatibility)
 RUN apt-get update && apt-get install 'ffmpeg' -y --no-install-recommends \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install 'ffmpeg' -y --no-install-recommends \
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Bundle app source
 COPY . ./

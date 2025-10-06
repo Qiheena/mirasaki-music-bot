@@ -1,7 +1,7 @@
 {
   "name": "mirasaki-music-bot",
-  "description": "A free, open-source JavaScript music bot created with discord.js and discord-player with Lavalink support",
-  "version": "1.3.0",
+  "description": "A free, open-source JavaScript music bot with full Lavalink v4 support, featuring 60+ commands, autoplay, sleep timer, history tracking, and advanced queue management",
+  "version": "1.4.0",
   "main": "src/index.js",
   "scripts": {
     "start": "node .",
@@ -74,6 +74,12 @@
     "discord-bot",
     "music-bot",
     "music",
+    "lavalink",
+    "lavalink-v4",
+    "shoukaku",
+    "autoplay",
+    "sleep-timer",
+    "queue-management",
     "slash-commands",
     "buttons",
     "modals",
@@ -98,6 +104,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=20.0.0 <22.0.0"
+    "node": ">=20.0.0 <23.0.0"
   }
 }
