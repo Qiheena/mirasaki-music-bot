@@ -9,15 +9,29 @@ const { LavalinkManager } = require('lavalink-client');
 function initializeLavalink(client) {
   const lavalinkNodes = [
     {
-      authorization: process.env.LAVALINK_PASSWORD || 'DevamOP',
-      host: process.env.LAVALINK_HOST || 'lavalink.devxcode.in',
+      authorization: process.env.LAVALINK_PASSWORD || 'https://dsc.gg/ajidevserver',
+      host: process.env.LAVALINK_HOST || 'lava-v4.ajieblogs.eu.org',
       port: parseInt(process.env.LAVALINK_PORT || '80'),
       id: process.env.LAVALINK_NODE_ID || 'main-node',
       secure: process.env.LAVALINK_SECURE === 'true' || false
+    },
+    {
+      authorization: 'nextgencoderspvt',
+      host: 'lavalink.nextgencoders.xyz',
+      port: 80,
+      id: 'fallback-node-1',
+      secure: false
+    },
+    {
+      authorization: 'catfein',
+      host: 'lava-us.catfein.co.id',
+      port: 5000,
+      id: 'fallback-node-2',
+      secure: false
     }
   ];
 
-  logger.info(`Initializing Lavalink with node: ${lavalinkNodes[0].host}:${lavalinkNodes[0].port}`);
+  logger.info(`Initializing Lavalink with ${lavalinkNodes.length} nodes (primary: ${lavalinkNodes[0].host}:${lavalinkNodes[0].port})`);
 
   const lavalink = new LavalinkManager({
     nodes: lavalinkNodes,
@@ -39,7 +53,7 @@ function initializeLavalink(client) {
     },
     autoSkip: true,
     playerOptions: {
-      clientBasedPositionUpdateInterval: 150,
+      clientBasedPositionUpdateInterval: 100,
       defaultSearchPlatform: 'scsearch',
       volumeDecrementer: 0.75,
       onDisconnect: {
@@ -47,11 +61,16 @@ function initializeLavalink(client) {
         destroyPlayer: false
       },
       onEmptyQueue: {
-        destroyAfterMs: 120_000
-      }
+        destroyAfterMs: 60_000
+      },
+      useUnresolvedData: true
     },
     queueOptions: {
       maxPreviousTracks: 25
+    },
+    advancedOptions: {
+      maxRetryAttempts: 5,
+      retryAttemptsInterval: 3000
     }
   });
 
