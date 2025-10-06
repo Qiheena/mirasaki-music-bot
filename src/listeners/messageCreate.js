@@ -45,15 +45,20 @@ module.exports = async (client, message) => {
     args = words.slice(1);
   }
 
-  const command = commands.get(commandName);
+  let command = commands.get(commandName);
   if (!command) return;
+
+  const actualCommandName = command.isAlias && command.aliasFor ? command.aliasFor : commandName;
+  if (command.isAlias && command.aliasFor) {
+    command = commands.get(command.aliasFor) || command;
+  }
 
   const permLevel = getPermissionLevel(clientConfig, member, channel);
 
   const mockInteraction = {
     type: 2,
-    commandName,
-    customId: commandName,
+    commandName: actualCommandName,
+    customId: actualCommandName,
     member,
     guild,
     channel,

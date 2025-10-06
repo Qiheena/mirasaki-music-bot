@@ -662,22 +662,28 @@ const getCommandSelectMenu = (member) => {
 const generateCommandInfoEmbed = (clientCmd, interaction) => {
   // Destructure from our clientCmd object
   const {
-    data, cooldown, clientPerms, userPerms, category
+    data, cooldown, clientPerms, userPerms, category, aliases, isAlias, aliasFor
   } = clientCmd;
-  const { channel, member } = interaction;
+  const { channel, member, guild } = interaction;
 
   // Utility function for displaying our permission requirements
   const getPermOutput = (permArr) => {
     permArr = resolvePermissionArray(permArr);
-    return permArr.length >= 1
-      ? permArr
-        .map((perm) => `${ channel.permissionsFor(member.user.id).has(PermissionsBitField.Flags[perm])
-          ? emojis.success
-          : emojis.error
-        } ${ splitCamelCaseStr(perm, ' ') }
-        `)
-        .join('\n')
-      : `${ emojis.success } None required`;
+    if (permArr.length === 0) {
+      return `${ emojis.success } None required`;
+    }
+    
+    if (!member || !channel || !guild) {
+      return permArr.map((perm) => `${ emojis.info } ${ splitCamelCaseStr(perm, ' ') }`).join('\n');
+    }
+    
+    return permArr
+      .map((perm) => `${ channel.permissionsFor(member.user.id).has(PermissionsBitField.Flags[perm])
+        ? emojis.success
+        : emojis.error
+      } ${ splitCamelCaseStr(perm, ' ') }
+      `)
+      .join('\n');
   };
 
   // Assigning our variable type-string
@@ -687,42 +693,74 @@ const generateCommandInfoEmbed = (clientCmd, interaction) => {
       ? 'Message Command (right-click message -> Apps)'
       : 'User Command (right-click user -> Apps)';
 
+  const { getGuildSettings } = require('../modules/db');
+  const { clientConfig } = require('../util');
+  const settings = guild ? getGuildSettings(guild.id) : null;
+  const prefix = settings?.prefix || '!';
+  const { ownerId } = clientConfig.permissions;
+  const isOwner = member?.user?.id === ownerId || false;
+
+  const fields = [
+    {
+      name: 'Category',
+      value: titleCase(category),
+      inline: true
+    },
+    {
+      name: `${ emojis.wait } Cooldown`,
+      value: `You can use this command **${
+        cooldown.usages === 1
+          ? 'once'
+          : cooldown.usages === 2 ? 'twice' : `${ cooldown.usages } times`
+      }** every **${ cooldown.duration }** second${ cooldown.duration === 1 ? '' : 's' }`,
+      inline: false
+    }
+  ];
+
+  if (aliases && aliases.length > 0 && !isAlias) {
+    fields.push({
+      name: `📝 Aliases`,
+      value: `\`${ aliases.join('`, `') }\`\n\n**Usage:** \`/${ data.name }\`, \`${ prefix }${ data.name }\`, or \`${ prefix }${ aliases[0] }\`${isOwner ? `\n\n**Owner Privilege:** Use \`${data.name}\` or \`${aliases[0]}\` without any prefix!` : ''}`,
+      inline: false
+    });
+  } else if (isAlias && aliasFor) {
+    fields.push({
+      name: `📝 Alias Info`,
+      value: `This is an alias for \`${ aliasFor }\`\n\n**Usage:** \`/${ aliasFor }\`, \`${ prefix }${ aliasFor }\`, or \`${ prefix }${ data.name }\`${isOwner ? `\n\n**Owner Privilege:** Use \`${aliasFor}\` or \`${data.name}\` without any prefix!` : ''}`,
+      inline: false
+    });
+  } else {
+    fields.push({
+      name: `📝 Prefix Usage`,
+      value: `**Usage:** \`/${ data.name }\` or \`${ prefix }${ data.name }\`${isOwner ? `\n\n**Owner Privilege:** Use \`${data.name}\` without any prefix!` : ''}`,
+      inline: false
+    });
+  }
+
+  fields.push(
+    {
+      name: 'Client Permissions',
+      value: getPermOutput(clientPerms),
+      inline: true
+    },
+    {
+      name: 'User Permissions',
+      value: getPermOutput(userPerms),
+      inline: true
+    },
+    {
+      name: 'SFW',
+      value: data.NSFW === true ? `${ emojis.error } This command is **not** SFW` : `${ emojis.success } This command **is** SFW`,
+      inline: false
+    }
+  );
+
   return {
     color: colorResolver(colors.main),
     title: titleCase(data.name),
     description: `${ data.description }`,
-    fields: [
-      {
-        name: 'Category',
-        value: titleCase(category),
-        inline: true
-      },
-      {
-        name: `${ emojis.wait } Cooldown`,
-        value: `You can use this command **${
-          cooldown.usages === 1
-            ? 'once'
-            : cooldown.usages === 2 ? 'twice' : `${ cooldown.usages } times`
-        }** every **${ cooldown.duration }** second${ cooldown.duration === 1 ? '' : 's' }`,
-        inline: false
-      },
-      {
-        name: 'Client Permissions',
-        value: getPermOutput(clientPerms),
-        inline: true
-      },
-      {
-        name: 'User Permissions',
-        value: getPermOutput(userPerms),
-        inline: true
-      },
-      {
-        name: 'SFW',
-        value: data.NSFW === true ? `${ emojis.error } This command is **not** SFW` : `${ emojis.success } This command **is** SFW`,
-        inline: false
-      }
-    ],
-    footer: { text: `Type: ${ typeStr }` }
+    fields,
+    footer: { text: `Type: ${ typeStr } | Server Prefix: ${ prefix }` }
   };
 };
 
@@ -734,6 +772,12 @@ const generateCommandInfoEmbed = (clientCmd, interaction) => {
  */
 const generateCommandOverviewEmbed = (commands, interaction) => {
   const { member, guild } = interaction;
+  const { getGuildSettings } = require('../modules/db');
+  const { clientConfig } = require('../util');
+  const settings = guild ? getGuildSettings(guild.id) : null;
+  const prefix = settings?.prefix || '!';
+  const { ownerId } = clientConfig.permissions;
+  const isOwner = member?.user?.id === ownerId || false;
 
   // Generate our embed field data
   const fields = [
@@ -741,7 +785,7 @@ const generateCommandOverviewEmbed = (commands, interaction) => {
       // Filtering out command the user doesn't have access to
       commands
         .concat(contextMenus)
-        .filter((cmd) => cmd.permLevel <= member.permLevel)
+        .filter((cmd) => cmd.permLevel <= member.permLevel && !cmd.isAlias)
     )
       .map((entry) => {
         return {
@@ -755,11 +799,14 @@ const generateCommandOverviewEmbed = (commands, interaction) => {
       })
   ];
 
+  const description = `Use \`/help <command>\` or \`${prefix}help <command>\` to see detailed info about a command.\n\n**Prefix:** \`${prefix}\`${isOwner ? `\n**Owner Privilege:** You can use commands without any prefix!` : ''}\n**Total Commands:** ${commands.filter(cmd => !cmd.isAlias).size}`;
+
   return {
     title: `Command help for ${ guild.name }`,
+    description,
     color: colorResolver(colors.main),
     fields,
-    footer: { text: `Requested by ${ member.user.username }` }
+    footer: { text: `Requested by ${ member.user.username } | Use /setprefix to change prefix` }
   };
 };
 

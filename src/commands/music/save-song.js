@@ -4,7 +4,7 @@ const { useQueue } = require('discord-player');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [],
+  aliases: ['save', 'ss'],
   data: { description: 'Save a song, I\'ll send it to your DMs' },
   // eslint-disable-next-line sonarjs/cognitive-complexity
   run: async (client, interaction) => {

@@ -4,7 +4,7 @@ const { requireSessionConditions } = require('../../modules/music');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [],
+  aliases: ['ap', 'auto'],
   data: { description: 'Toggle autoplay - automatically queue related songs when queue is empty' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

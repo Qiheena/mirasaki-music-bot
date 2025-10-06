@@ -9,7 +9,7 @@ const lyricsExtractor = lyricsExtractorSuper();
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [],
+  aliases: ['ly', 'lyr'],
   cooldown: {
     usages: 5,
     duration: 30,

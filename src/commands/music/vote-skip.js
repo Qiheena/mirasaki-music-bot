@@ -6,7 +6,7 @@ const voteSkipCache = new Map();
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [],
+  aliases: ['voteskip', 'vs'],
   data: { description: 'Vote to skip the currently playing song, requires strict majority to pass' },
   run: async (client, interaction) => {
     const { emojis } = client.container;
