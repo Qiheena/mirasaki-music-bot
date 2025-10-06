@@ -354,6 +354,14 @@ class APICommand extends CommandBase {
      * @property {boolean} global Is the command enabled globally or only in our test-server
      */
     this.global = 'global' in config ? config.global : false;
+    /**
+     * @property {boolean} isAlias Indicates if the command is an active alias
+     */
+    this.isAlias = 'isAlias' in config ? config.isAlias : false;
+    /**
+     * @property {string | undefined} aliasFor The command name this alias is for
+     */
+    this.aliasFor = 'aliasFor' in config ? config.aliasFor : undefined;
   }
 }
 

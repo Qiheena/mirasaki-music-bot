@@ -180,6 +180,8 @@ for (const filePath of getFiles(CHAT_INPUT_COMMAND_DIR)) {
     command.load(filePath, commands);
 
     // loadAliases AFTER #load(), setting the origin filepath
+    // Aliases are loaded for PREFIX command support
+    // They are filtered out from slash command registration in handlers/commands.js
     command.loadAliases();
   }
   catch (err) {
