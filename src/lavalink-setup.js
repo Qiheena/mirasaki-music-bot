@@ -24,7 +24,13 @@ function initializeLavalink(client) {
     sendToShard: (guildId, payload) => {
       const guild = client.guilds.cache.get(guildId);
       if (guild) {
-        guild.shard?.send(payload);
+        const shardId = guild.shardId ?? 0;
+        const shard = client.ws.shards.get(shardId);
+        if (shard) {
+          shard.send(payload);
+        } else {
+          client.ws.broadcast(payload);
+        }
       }
     },
     client: {
