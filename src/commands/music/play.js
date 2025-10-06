@@ -79,7 +79,7 @@ module.exports = new ChatInputCommand({
         // Get or create player
         let player = client.players.get(guild.id);
         if (!player) {
-          player = await node.joinChannel({
+          player = await client.lavalink.joinVoiceChannel({
             guildId: guild.id,
             channelId: channel.id,
             shardId: guild.shardId ?? 0,
