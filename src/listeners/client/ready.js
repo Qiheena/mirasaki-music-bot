@@ -1,7 +1,7 @@
 const logger = require('@mirasaki/logger');
 const chalk = require('chalk');
 
-module.exports = (client) => {
+module.exports = async (client) => {
   // Logging our process uptime to the developer
   const upTimeStr = chalk.yellow(`${ Math.floor(process.uptime()) || 1 } second(s)`);
 
@@ -10,6 +10,14 @@ module.exports = (client) => {
   }${
     chalk.grey(`#${ client.user.discriminator }`)
   } after ${ upTimeStr }`);
+
+  // Initialize Lavalink if enabled
+  if (process.env.USE_LAVALINK === 'true') {
+    const { initializeLavalink } = require('../../lavalink-setup');
+    client.lavalink = initializeLavalink(client);
+    await client.lavalink.init(client.user);
+    logger.success('Lavalink initialized successfully');
+  }
 
   // Calculating the membercount
   const memberCount = client.guilds.cache.reduce(

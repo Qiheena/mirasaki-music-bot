@@ -60,17 +60,27 @@ const client = new Client({
 });
 
 // Discord Music Player
-const player = new Player(client, {
-  skipFFmpeg: false,
-  useLegacyFFmpeg: false,
-  ytdlOptions: {
-    highWaterMark: 1 << 25,
-    filter: 'audioonly',
-    quality: 'highestaudio',
-    liveBuffer: 40000
-  }
-});
-require('./music-player')(player);
+const USE_LAVALINK = process.env.USE_LAVALINK === 'true';
+let player;
+let lavalink;
+
+if (USE_LAVALINK) {
+  const { initializeLavalink } = require('./lavalink-setup');
+  logger.info('Using Lavalink for audio streaming');
+} else {
+  player = new Player(client, {
+    skipFFmpeg: false,
+    useLegacyFFmpeg: false,
+    ytdlOptions: {
+      highWaterMark: 1 << 25,
+      filter: 'audioonly',
+      quality: 'highestaudio',
+      liveBuffer: 40000
+    }
+  });
+  require('./music-player')(player);
+  logger.info('Using discord-player for audio streaming');
+}
 
 // Destructuring from env
 const {
