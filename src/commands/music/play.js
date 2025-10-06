@@ -156,7 +156,31 @@ module.exports = new ChatInputCommand({
               queue.currentMessage = null;
             }
             
-            const nextTrack = queue.next();
+            let nextTrack = queue.next();
+            
+            if (!nextTrack && queue.autoplay && queue.current) {
+              try {
+                const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
+                if (node) {
+                  const searchQuery = `${queue.current.info.author} ${queue.current.info.title}`;
+                  const result = await node.rest.resolve(`ytsearch:${searchQuery}`);
+                  
+                  if (result && result.loadType === 'search' && result.data.length > 1) {
+                    const recommendedTrack = result.data[1];
+                    nextTrack = {
+                      track: recommendedTrack.encoded,
+                      info: recommendedTrack.info,
+                      requester: queue.current.requester
+                    };
+                    queue.add(nextTrack);
+                    nextTrack = queue.next();
+                  }
+                }
+              } catch (e) {
+                console.error('Autoplay error:', e);
+              }
+            }
+            
             if (nextTrack) {
               await player.playTrack({ track: { encoded: nextTrack.track } });
               
