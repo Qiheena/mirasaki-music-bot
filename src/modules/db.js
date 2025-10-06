@@ -12,7 +12,7 @@ const db = new loki(`${ pkg.name }.db`, {
   adapter: fsAdapter,
   env: 'NODEJS',
   autosave: true,
-  autosaveInterval: 3600,
+  autosaveInterval: 1800, // Reduced from 3600 (1 hour) to 1800 (30 minutes) for faster persistence
   autoload: true,
   autoloadCallback: initializeDatabase
 });
@@ -72,65 +72,64 @@ const getGuildSettings = (guildId) => {
     settings = guilds.by('guildId', guildId);
   }
 
-  // Update settings
+  // Batch update settings - check all undefined values first
+  let needsUpdate = false;
+
   if (typeof settings.volume === 'undefined') {
     settings.volume = clientConfig.defaultVolume;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.repeatMode === 'undefined') {
     settings.repeatMode = clientConfig.defaultRepeatMode;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.useThreadSessions === 'undefined') {
     settings.useThreadSessions = clientConfig.defaultUseThreadSessions;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.threadSessionStrictCommandChannel === 'undefined') {
     settings.threadSessionStrictCommandChannel = clientConfig.defaultThreadSessionStrictCommandChannel;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.leaveOnEndCooldown === 'undefined') {
     settings.leaveOnEndCooldown = clientConfig.defaultLeaveOnEndCooldown;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.djRoleIds === 'undefined') {
     settings.djRoleIds = [];
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.equalizer === 'undefined') {
     settings.equalizer = 'null';
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.leaveOnEmpty === 'undefined') {
     settings.leaveOnEmpty = clientConfig.defaultLeaveOnEmpty;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.leaveOnEmptyCooldown === 'undefined') {
     settings.leaveOnEmptyCooldown = clientConfig.defaultLeaveOnEmptyCooldown;
-    guilds.update(settings);
-    saveDb();
+    needsUpdate = true;
   }
 
   if (typeof settings.prefix === 'undefined') {
     settings.prefix = '!';
+    needsUpdate = true;
+  }
+
+  // Only update and save once if any changes were made
+  if (needsUpdate) {
     guilds.update(settings);
-    saveDb();
+    // Save asynchronously to not block
+    process.nextTick(() => saveDb());
   }
 
   if (process.env.NODE_ENV !== 'production') console.dir(settings);

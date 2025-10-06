@@ -3,9 +3,9 @@ const { ComponentCommand } = require('../../classes/Commands');
 const logger = require('@mirasaki/logger');
 
 const searchCache = new Map();
-const CACHE_DURATION = 30000;
-const MAX_CACHE_SIZE = 100;
-const SEARCH_TIMEOUT = 2500;
+const CACHE_DURATION = 20000; // Reduced from 30s to 20s for faster fresh results
+const MAX_CACHE_SIZE = 150; // Increased from 100 to 150 for more cached queries
+const SEARCH_TIMEOUT = 2000; // Reduced from 2.5s to 2s for faster responses
 
 function cleanCache() {
   const now = Date.now();
@@ -70,7 +70,9 @@ module.exports = new ComponentCommand({ run: async (client, interaction, query) 
     });
 
   searchCache.set(cacheKey, { results: returnData, timestamp: Date.now() });
-  cleanCache();
+  
+  // Clean cache asynchronously to not block the response
+  process.nextTick(cleanCache);
   
   const duration = Date.now() - startTime;
   logger.debug(`<play> | Auto Complete | Queried "${query}" in ${duration} ms`);
