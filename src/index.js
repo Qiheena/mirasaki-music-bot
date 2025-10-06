@@ -286,13 +286,29 @@ if (USE_API === 'true') require('./server/');
 if (modeArg && modeArg.endsWith('test')) process.exit(0);
 
 (async () => {
-  // Register extractors only if not using Lavalink
+  // Register extractors BEFORE login to ensure they're ready
   if (!USE_LAVALINK) {
-    if (clientConfig.plugins.soundCloud === true) await player.extractors.register(SoundCloudExtractor, {});
-    if (clientConfig.plugins.fileAttachments === true) await player.extractors.register(AttachmentExtractor, {});
-    if (clientConfig.plugins.appleMusic === true) await player.extractors.register(AppleMusicExtractor, {});
-    if (clientConfig.plugins.vimeo === true) await player.extractors.register(VimeoExtractor, {});
-    if (clientConfig.plugins.reverbNation === true) await player.extractors.register(ReverbnationExtractor, {});
+    logger.info('Registering music extractors...');
+    if (clientConfig.plugins.soundCloud === true) {
+      await player.extractors.register(SoundCloudExtractor, {});
+      logger.success('SoundCloud extractor registered');
+    }
+    if (clientConfig.plugins.fileAttachments === true) {
+      await player.extractors.register(AttachmentExtractor, {});
+      logger.success('Attachment extractor registered');
+    }
+    if (clientConfig.plugins.appleMusic === true) {
+      await player.extractors.register(AppleMusicExtractor, {});
+      logger.success('AppleMusic extractor registered');
+    }
+    if (clientConfig.plugins.vimeo === true) {
+      await player.extractors.register(VimeoExtractor, {});
+      logger.success('Vimeo extractor registered');
+    }
+    if (clientConfig.plugins.reverbNation === true) {
+      await player.extractors.register(ReverbnationExtractor, {});
+      logger.success('ReverbNation extractor registered');
+    }
   }
 
   // Logging in to our client

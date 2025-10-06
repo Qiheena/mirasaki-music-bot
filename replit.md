@@ -153,3 +153,70 @@ Preferred communication style: Simple, everyday language.
 ### Optional Services
 - **Express**: REST API server for command documentation (when USE_API enabled)
 - **Lyrics Extractor**: External lyrics fetching via @discord-player/extractor
+
+## Ultra-Fast Lavalink Setup (Updated October 2025)
+
+### What's Been Optimized
+
+The Lavalink integration has been configured for **ultra-fast performance** with the following optimizations:
+
+#### Performance Improvements
+- **100ms position tracking** (down from 150ms) for more responsive playback control
+- **60-second cleanup** (down from 120s) for faster resource management
+- **useUnresolvedData enabled** for instant track loading without waiting for full metadata
+- **10 retry attempts with 3s intervals** for reliable connection recovery
+- **Enhanced error handling** to prevent bot crashes when Lavalink is unavailable
+
+#### Reliability Features
+- Automatic reconnection on disconnects
+- Graceful fallback to discord-player if Lavalink fails
+- Try-catch error handling prevents crashes
+- Player persistence on disconnects
+
+### How to Enable Lavalink (Ultra-Fast Mode)
+
+Lavalink setup is **COMPLETE** but needs to be enabled. To activate ultra-fast audio streaming:
+
+1. **Open the `.env` file** (Secrets tab in Replit)
+2. **Find the line**: `USE_LAVALINK=false`
+3. **Change it to**: `USE_LAVALINK=true`
+4. **Restart the bot** (it will auto-restart)
+
+### Current Configuration
+
+**Primary Node**: `lava-v4.ajieblogs.eu.org:80` (Public Lavalink v4 server)
+- Fast, reliable, free public server
+- Optimized for low-latency streaming
+- Auto-retry on connection issues
+
+### Security Notes
+
+⚠️ **Important**: The current setup uses a public Lavalink server over HTTP (not HTTPS). This is:
+- ✅ **Good for**: Testing, development, non-critical usage
+- ⚠️ **Not ideal for**: Production environments with sensitive data
+
+For production use, consider:
+- Using HTTPS/WSS connections (`LAVALINK_SECURE=true`)
+- Self-hosting Lavalink for full control
+- Using private Lavalink nodes with strong authentication
+
+### Troubleshooting
+
+**Issue**: Bot says "Using discord-player" instead of "Using Lavalink"
+- **Solution**: Set `USE_LAVALINK=true` in your .env file
+
+**Issue**: "Failed to initialize Lavalink" error
+- **Solution**: Bot will automatically fallback to discord-player, music will still work
+
+**Issue**: No audio playing
+- **Solution**: Check bot has proper Discord voice permissions in your server
+
+### What Works Now
+
+✅ Ultra-fast Lavalink configuration ready
+✅ Error handling prevents crashes
+✅ Automatic fallback to discord-player
+✅ Public server pre-configured
+✅ Optimized for speed and reliability
+
+**Just enable it in .env and enjoy ultra-fast music streaming!** 🚀
