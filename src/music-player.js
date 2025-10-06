@@ -5,21 +5,42 @@ const {
 const { EmbedBuilder, escapeMarkdown } = require('discord.js');
 const { getGuildSettings } = require('./modules/db');
 const { MS_IN_ONE_SECOND, EMBED_DESCRIPTION_MAX_LENGTH } = require('./constants');
+const { createMusicControlButtons } = require('./modules/music-buttons');
 
 module.exports = (player) => {
   // this event is emitted whenever discord-player starts to play a track
-  player.events.on('playerStart', (queue, track) => {
-    queue.metadata.channel.send({ embeds: [
-      new EmbedBuilder({
-        color: colorResolver(),
-        title: 'Started Playing',
-        description: `[${ escapeMarkdown(track.title) }](${ track.url })`,
-        thumbnail: { url: track.thumbnail },
-        footer: { text: `${ track.duration } - by ${ track.author }\nRequested by: ${
-          queue.metadata.member?.user?.username
-        }` }
-      }).setTimestamp(queue.metadata.timestamp)
-    ] });
+  player.events.on('playerStart', async (queue, track) => {
+    const embed = new EmbedBuilder()
+      .setColor(0xFF69B4)
+      .setDescription([
+        '**Started Playing Song**',
+        '',
+        `**Title:** [${ escapeMarkdown(track.title) }](${ track.url })`,
+        `**Author:** ${ track.author }`,
+        `**Duration:** ${ track.duration }`,
+        `**Requested by:** @${ queue.metadata.member?.user?.username || 'Unknown' }`,
+        '',
+        `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+      ].join('\n'))
+      .setThumbnail(track.thumbnail);
+
+    const buttons = createMusicControlButtons(
+      queue.guild.id,
+      true,
+      queue.node.isPaused(),
+      queue.history.tracks.data.length > 0,
+      queue.repeatMode === 3
+    );
+
+    const nowPlayingMessage = await queue.metadata.channel.send({
+      embeds: [embed],
+      components: buttons
+    });
+
+    if (nowPlayingMessage) {
+      if (!queue.metadata.messages) queue.metadata.messages = [];
+      queue.metadata.messages.push(nowPlayingMessage);
+    }
   });
 
   player.events.on('error', (queue, error) => {

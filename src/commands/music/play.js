@@ -1,4 +1,4 @@
-const { ApplicationCommandOptionType } = require('discord.js');
+const { ApplicationCommandOptionType, EmbedBuilder } = require('discord.js');
 const { ChatInputCommand } = require('../../classes/Commands');
 const {
   requireSessionConditions, ALLOWED_CONTENT_TYPE, musicEventChannel
@@ -7,6 +7,7 @@ const { clientConfig, isAllowedContentType, colorResolver } = require('../../uti
 const { getGuildSettings } = require('../../modules/db');
 const { MS_IN_ONE_SECOND } = require('../../constants');
 const { msToTime } = require('../../lavalink-setup');
+const { createMusicControlButtons } = require('../../modules/music-buttons');
 
 module.exports = new ChatInputCommand({
   global: true,
@@ -185,18 +186,36 @@ module.exports = new ChatInputCommand({
             await player.playTrack({ track: { encoded: track.track } });
             await player.setGlobalVolume(queue.volume);
             
-            // Send now playing message
-            await queue.metadata.channel?.send({
-              embeds: [{
-                color: colorResolver(),
-                title: '🎵 Now Playing',
-                description: `**[${track.info.title}](${track.info.uri})**`,
-                thumbnail: { url: track.info.artworkUrl },
-                footer: { 
-                  text: `Duration: ${msToTime(track.info.length)} | Requested by: ${track.requester.username}` 
-                }
-              }]
+            const embed = new EmbedBuilder()
+              .setColor(0xFF69B4)
+              .setDescription([
+                '**Started Playing Song**',
+                '',
+                `**Title:** [${track.info.title}](${track.info.uri})`,
+                `**Author:** ${track.info.author}`,
+                `**Duration:** ${msToTime(track.info.length)}`,
+                `**Requested by:** @${track.requester.username}`,
+                '',
+                `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+              ].join('\n'))
+              .setThumbnail(track.info.artworkUrl);
+
+            const buttons = createMusicControlButtons(
+              guild.id,
+              true,
+              false,
+              queue.history.length > 0,
+              queue.autoplay
+            );
+
+            const nowPlayingMessage = await queue.metadata.channel?.send({
+              embeds: [embed],
+              components: buttons
             });
+
+            if (nowPlayingMessage) {
+              queue.currentMessage = nowPlayingMessage;
+            }
           }
         }
 
