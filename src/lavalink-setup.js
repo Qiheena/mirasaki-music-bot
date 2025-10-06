@@ -83,19 +83,54 @@ function createQueue(guildId, metadata) {
     guildId,
     tracks: [],
     current: null,
+    history: [],
     volume: 50,
     loop: 'off', // 'off', 'track', 'queue'
+    autoplay: false,
     metadata,
     
     add(track) {
       this.tracks.push(track);
     },
     
+    addToHistory(track) {
+      if (track) {
+        this.history.push(track);
+        if (this.history.length > 100) {
+          this.history.shift();
+        }
+      }
+    },
+    
+    getPreviousTrack() {
+      return this.history[this.history.length - 1] || null;
+    },
+    
     next() {
       if (this.loop === 'track') return this.current;
-      if (this.loop === 'queue' && this.current) this.tracks.push(this.current);
+      
+      if (this.current && this.loop !== 'track') {
+        this.addToHistory(this.current);
+      }
+      
+      if (this.loop === 'queue' && this.current) {
+        this.tracks.push(this.current);
+      }
+      
       this.current = this.tracks.shift() || null;
       return this.current;
+    },
+    
+    playPrevious() {
+      const prevTrack = this.history.pop();
+      if (prevTrack) {
+        if (this.current) {
+          this.tracks.unshift(this.current);
+        }
+        this.current = prevTrack;
+        return prevTrack;
+      }
+      return null;
     },
     
     clear() {
@@ -107,6 +142,30 @@ function createQueue(guildId, metadata) {
         const j = Math.floor(Math.random() * (i + 1));
         [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
       }
+    },
+    
+    remove(index) {
+      if (index >= 0 && index < this.tracks.length) {
+        return this.tracks.splice(index, 1)[0];
+      }
+      return null;
+    },
+    
+    move(from, to) {
+      if (from >= 0 && from < this.tracks.length && to >= 0 && to < this.tracks.length) {
+        const track = this.tracks.splice(from, 1)[0];
+        this.tracks.splice(to, 0, track);
+        return true;
+      }
+      return false;
+    },
+    
+    swap(index1, index2) {
+      if (index1 >= 0 && index1 < this.tracks.length && index2 >= 0 && index2 < this.tracks.length) {
+        [this.tracks[index1], this.tracks[index2]] = [this.tracks[index2], this.tracks[index1]];
+        return true;
+      }
+      return false;
     }
   };
 }
