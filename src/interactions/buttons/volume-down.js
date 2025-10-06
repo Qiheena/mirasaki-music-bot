@@ -15,26 +15,26 @@ module.exports = new ComponentCommand({
         const queue = client.queues.get(guild.id);
         
         if (!player || !queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
 
         const newVolume = Math.max(0, queue.volume - 10);
         queue.volume = newVolume;
         await player.setGlobalVolume(newVolume);
-        await interaction.reply({ content: `${ emojis.success } ${ member }, volume decreased to **${ newVolume }%**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, volume decreased to **${ newVolume }%**`);
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         
         const currentVolume = queue.node.volume;
         const newVolume = Math.max(0, currentVolume - 10);
         queue.node.setVolume(newVolume);
-        await interaction.reply({ content: `${ emojis.success } ${ member }, volume decreased to **${ newVolume }%**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, volume decreased to **${ newVolume }%**`);
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });

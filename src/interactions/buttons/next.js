@@ -15,28 +15,25 @@ module.exports = new ComponentCommand({
         const queue = client.queues.get(guild.id);
         
         if (!player || !player.track || !queue?.current) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         
         const currentTrackTitle = queue.current.info.title;
         await player.stopTrack();
-        await interaction.reply({ content: `${ emojis.success } ${ member }, skipped **\`${ currentTrackTitle }\`**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, skipped **\`${ currentTrackTitle }\`**`);
       } else {
         const guildPlayerNode = usePlayer(guild.id);
         const currentTrack = guildPlayerNode?.queue?.currentTrack;
         if (!currentTrack) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         const success = guildPlayerNode.skip();
-        await interaction.reply({ 
-          content: success
-            ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack.title }\`**`
-            : `${ emojis.error } ${ member }, something went wrong - couldn't skip current playing song`,
-          ephemeral: true
-        });
+        await interaction.reply(success
+          ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack.title }\`**`
+          : `${ emojis.error } ${ member }, something went wrong - couldn't skip current playing song`);
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });

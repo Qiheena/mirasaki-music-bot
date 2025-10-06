@@ -13,20 +13,20 @@ module.exports = new ComponentCommand({
       if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
         const player = client.players.get(guild.id);
         if (!player || !player.track) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         await player.setPaused(false);
-        await interaction.reply({ content: `${ emojis.success } ${ member }, resumed playback`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, resumed playback`);
       } else {
         const guildPlayerNode = usePlayer(guild.id);
         if (!guildPlayerNode) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         guildPlayerNode.setPaused(false);
-        await interaction.reply({ content: `${ emojis.success } ${ member }, resumed playback`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, resumed playback`);
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });

@@ -14,23 +14,23 @@ module.exports = new ComponentCommand({
         const queue = client.queues.get(guild.id);
         
         if (!queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no active music session`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
         }
 
         queue.autoplay = !queue.autoplay;
-        await interaction.reply({ content: `${ emojis.success } ${ member }, autoplay has been **${ queue.autoplay ? 'enabled' : 'disabled' }**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, autoplay has been **${ queue.autoplay ? 'enabled' : 'disabled' }**`);
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no active music session`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
         }
 
         queue.setRepeatMode(queue.repeatMode === 3 ? 0 : 3);
         const isEnabled = queue.repeatMode === 3;
-        await interaction.reply({ content: `${ emojis.success } ${ member }, autoplay has been **${ isEnabled ? 'enabled' : 'disabled' }**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, autoplay has been **${ isEnabled ? 'enabled' : 'disabled' }**`);
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });

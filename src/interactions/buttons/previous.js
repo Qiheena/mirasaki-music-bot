@@ -15,27 +15,27 @@ module.exports = new ComponentCommand({
         const queue = client.queues.get(guild.id);
         
         if (!player || !queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
 
         const prevTrack = queue.playPrevious();
         if (!prevTrack) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no previous track in history`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no previous track in history`);
         }
 
         await player.playTrack({ track: { encoded: prevTrack.track } });
-        await interaction.reply({ content: `${ emojis.success } ${ member }, playing previous track: **\`${ prevTrack.info.title }\`**`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, playing previous track: **\`${ prevTrack.info.title }\`**`);
       } else {
         const history = useHistory(guild.id);
         if (!history || !history.previousTrack) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, no previous track in history`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, no previous track in history`);
         }
         
         await history.previous();
-        await interaction.reply({ content: `${ emojis.success } ${ member }, playing previous track`, ephemeral: true });
+        await interaction.reply(`${ emojis.success } ${ member }, playing previous track`);
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });

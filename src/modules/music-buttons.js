@@ -4,17 +4,17 @@ function createMusicControlButtons(guildId, isPlaying = false, isPaused = false,
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('previous')
-      .setEmoji('⏮️')
+      .setLabel('Previous')
       .setStyle(hasHistory ? ButtonStyle.Primary : ButtonStyle.Secondary)
       .setDisabled(!hasHistory),
     new ButtonBuilder()
       .setCustomId(isPaused ? 'resume' : 'pause')
-      .setEmoji(isPaused ? '▶️' : '⏸️')
+      .setLabel(isPaused ? 'Resume' : 'Pause')
       .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary)
       .setDisabled(!isPlaying),
     new ButtonBuilder()
       .setCustomId('next')
-      .setEmoji('⏭️')
+      .setLabel('Next')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(!isPlaying)
   );
@@ -22,19 +22,19 @@ function createMusicControlButtons(guildId, isPlaying = false, isPaused = false,
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('volume-down')
-      .setEmoji('🔉')
+      .setLabel('Volume Down')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('volume-up')
-      .setEmoji('🔊')
+      .setLabel('Volume Up')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('autoplay')
-      .setEmoji('🔁')
+      .setLabel('Autoplay')
       .setStyle(autoplayEnabled ? ButtonStyle.Success : ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('queue')
-      .setEmoji('📜')
+      .setLabel('Queue')
       .setStyle(ButtonStyle.Secondary)
   );
 

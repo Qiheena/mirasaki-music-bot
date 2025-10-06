@@ -17,7 +17,7 @@ module.exports = new ComponentCommand({
         const queue = client.queues.get(guild.id);
         
         if (!queue || !queue.current) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, queue is currently empty`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, queue is currently empty. You should totally \`/play\` something - but that's just my opinion.`);
         }
 
         const queueTracks = queue.tracks;
@@ -36,11 +36,11 @@ module.exports = new ComponentCommand({
           }`)
           .setFooter({ text: `${queueTracks.length} track${queueTracks.length !== 1 ? 's' : ''} in queue | Volume: ${queue.volume}%` });
         
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed] });
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
-          return interaction.reply({ content: `${ emojis.error } ${ member }, queue is currently empty`, ephemeral: true });
+          return interaction.reply(`${ emojis.error } ${ member }, queue is currently empty. You should totally \`/play\` something - but that's just my opinion.`);
         }
 
         const currentTrack = queue.currentTrack;
@@ -59,10 +59,10 @@ module.exports = new ComponentCommand({
           }`)
           .setFooter({ text: `${tracks.length} track${tracks.length !== 1 ? 's' : ''} in queue | Volume: ${queue.node.volume}%` });
         
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed] });
       }
     } catch (e) {
-      interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, ephemeral: true });
+      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });
