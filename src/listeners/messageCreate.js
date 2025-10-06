@@ -6,7 +6,7 @@ const { clientConfig, formatBotMessage } = require('../util');
 
 const scheduleAutoDelete = (msg, settings) => {
   if (!settings.autoDeleteDuration || settings.autoDeleteDuration <= 0) return;
-  
+
   setTimeout(() => {
     msg.delete().catch(() => {});
   }, settings.autoDeleteDuration * 1000);
@@ -25,16 +25,16 @@ module.exports = async (client, message) => {
   let args = [];
 
   const isOwner = author.id === ownerId;
-  
+
   if (isOwner) {
     const words = content.trim().split(/\s+/);
     commandName = words[0].toLowerCase();
     args = words.slice(1);
-    
+
     if (!commands.has(commandName)) {
       const settings = getGuildSettings(guild.id);
       prefix = settings.prefix;
-      
+
       if (content.startsWith(prefix)) {
         commandName = content.slice(prefix.length).trim().split(/\s+/)[0].toLowerCase();
         args = content.slice(prefix.length).trim().split(/\s+/).slice(1);
@@ -72,7 +72,7 @@ module.exports = async (client, message) => {
   const subcommand = args[0] && command.data.options?.find(opt => opt.type === 1 && opt.name === args[0].toLowerCase());
   const effectiveOptions = subcommand ? subcommand.options : command.data.options;
   const effectiveArgs = subcommand ? args.slice(1) : args;
-  
+
   const getArgByOption = (name, type) => {
     if (!effectiveOptions) {
       if (type === 'string') return effectiveArgs.join(' ') || null;
@@ -88,12 +88,12 @@ module.exports = async (client, message) => {
       }
       return null;
     }
-    
+
     const option = effectiveOptions.find(opt => opt.name === name);
     if (!option) return null;
-    
+
     const index = effectiveOptions.indexOf(option);
-    
+
     if (type === 'string') {
       if (option.type === 3) {
         const hasMoreOptions = index < effectiveOptions.length - 1;
@@ -104,22 +104,22 @@ module.exports = async (client, message) => {
       }
       return effectiveArgs[index] || null;
     }
-    
+
     if (type === 'integer') {
       const value = parseInt(effectiveArgs[index]);
       return Number.isNaN(value) ? null : value;
     }
-    
+
     if (type === 'boolean') {
       const value = effectiveArgs[index]?.toLowerCase();
       if (value === 'true' || value === 'yes' || value === '1') return true;
       if (value === 'false' || value === 'no' || value === '0') return false;
       return null;
     }
-    
+
     return effectiveArgs[index] || null;
   };
-  
+
   const mockInteraction = {
     type: 2,
     commandName: actualCommandName,
@@ -170,15 +170,26 @@ module.exports = async (client, message) => {
     },
     reply: async (payload) => {
       const formatted = formatBotMessage(payload);
+
+      // ✅ unwrap .data if present
+      if (formatted.embeds?.length) {
+        formatted.embeds = formatted.embeds.map(e => e.data ? e.data : e);
+      }
+
       const reply = await message.reply(formatted);
-      
       const settings = getGuildSettings(guild.id);
       scheduleAutoDelete(reply, settings);
-      
+
       return reply;
     },
     editReply: async (payload) => {
       const formatted = formatBotMessage(payload);
+
+      // ✅ unwrap .data if present
+      if (formatted.embeds?.length) {
+        formatted.embeds = formatted.embeds.map(e => e.data ? e.data : e);
+      }
+
       const sent = await message.channel.messages.fetch({ limit: 1 });
       const lastMessage = sent.first();
       if (lastMessage && lastMessage.author.id === client.user.id) {
@@ -194,11 +205,16 @@ module.exports = async (client, message) => {
     },
     followUp: async (payload) => {
       const formatted = formatBotMessage(payload);
+
+      // ✅ unwrap .data if present
+      if (formatted.embeds?.length) {
+        formatted.embeds = formatted.embeds.map(e => e.data ? e.data : e);
+      }
+
       const followUpMsg = await message.channel.send(formatted);
-      
       const settings = getGuildSettings(guild.id);
       scheduleAutoDelete(followUpMsg, settings);
-      
+
       return followUpMsg;
     },
     isCommand: () => true,
