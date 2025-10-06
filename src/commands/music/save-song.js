@@ -17,20 +17,42 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true, false, false)) return;
 
     try {
-      const queue = useQueue(guild.id);
-      if (!queue || !queue.isPlaying()) {
-        interaction.reply(`${ emojis.error } ${ member }, not currently playing - this command has been cancelled`);
-        return;
-      }
+      let npEmbed;
+      
+      if (process.env.USE_LAVALINK === 'true') {
+        const player = client.players?.get(guild.id);
+        const queue = client.queues?.get(guild.id);
+        
+        if (!player || !player.track || !queue?.current) {
+          interaction.reply(`${ emojis.error } ${ member }, not currently playing - this command has been cancelled`);
+          return;
+        }
 
-      const { currentTrack } = queue;
-      if (!currentTrack) {
-        interaction.reply(`${ emojis.error } ${ member }, can't fetch information on currently displaying song - please try again later`);
-        return;
-      }
+        const currentTrack = queue.current;
+        if (!currentTrack) {
+          interaction.reply(`${ emojis.error } ${ member }, can't fetch information on currently displaying song - please try again later`);
+          return;
+        }
 
-      // Resolve embed and create DM
-      const npEmbed = nowPlayingEmbed(queue, false);
+        // Resolve embed and create DM
+        npEmbed = nowPlayingEmbed(queue, false, true);
+      } else {
+        const queue = useQueue(guild.id);
+        if (!queue || !queue.isPlaying()) {
+          interaction.reply(`${ emojis.error } ${ member }, not currently playing - this command has been cancelled`);
+          return;
+        }
+
+        const { currentTrack } = queue;
+        if (!currentTrack) {
+          interaction.reply(`${ emojis.error } ${ member }, can't fetch information on currently displaying song - please try again later`);
+          return;
+        }
+
+        // Resolve embed and create DM
+        npEmbed = nowPlayingEmbed(queue, false);
+      }
+      
       const channel = await user.createDM().catch(() => null);
       if (!channel) {
         interaction.reply(`${ emojis.error } ${ member }, I don't have permission to DM you - this command has been cancelled`);

@@ -36,7 +36,17 @@ module.exports = new ChatInputCommand({
   run: async (client, interaction) => {
     const { emojis } = client.container;
     const { member, guild } = interaction;
-    let query = interaction.options.getString('query-lyrics') ?? interaction.options.getString('query-lyrics-no-auto-complete') ?? useQueue(guild.id)?.currentTrack?.title;
+    
+    // Get current track from either Lavalink or discord-player
+    let currentTrackTitle;
+    if (process.env.USE_LAVALINK === 'true') {
+      const queue = client.queues?.get(guild.id);
+      currentTrackTitle = queue?.current?.info?.title;
+    } else {
+      currentTrackTitle = useQueue(guild.id)?.currentTrack?.title;
+    }
+    
+    let query = interaction.options.getString('query-lyrics') ?? interaction.options.getString('query-lyrics-no-auto-complete') ?? currentTrackTitle;
     if (!query) {
       interaction.reply(`${ emojis.error } ${ member }, please provide a query, currently playing song can only be used when playback is active - this command has been cancelled`);
       return;

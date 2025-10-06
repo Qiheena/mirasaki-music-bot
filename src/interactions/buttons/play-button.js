@@ -46,57 +46,111 @@ module.exports = new ComponentCommand({ run: async (client, interaction) => {
 
     // Resolve volume for this session - clamp max 100
     let volume = settings.volume ?? clientConfig.defaultVolume;
-    // Note: Don't increase volume for attachments as having to check
-    // and adjust on every song end isn't perfect
     volume = Math.min(100, volume);
 
     // Resolve leave on end cooldown
     const leaveOnEndCooldown = ((settings.leaveOnEndCooldown ?? 2) * MS_IN_ONE_SECOND);
     const leaveOnEmptyCooldown = ((settings.leaveOnEmptyCooldown ?? 2) * MS_IN_ONE_SECOND);
 
-    // nodeOptions are the options for guild node (aka your queue in simple word)
-    // we can access this metadata object using queue.metadata later on
-    const { track } = await player.play(
-      channel,
-      url,
-      {
-        requestedBy: interaction.user,
-        nodeOptions: {
-          skipOnNoStream: true,
-          leaveOnEnd: true,
-          leaveOnEndCooldown,
-          leaveOnEmpty: settings.leaveOnEmpty,
-          leaveOnEmptyCooldown,
-          volume,
+    if (process.env.USE_LAVALINK === 'true') {
+      // Lavalink implementation
+      const node = client.lavalink.nodeMap.get('main');
+      const result = await node.rest.resolve(url);
+      
+      if (!result?.tracks || result.tracks.length === 0) {
+        await interaction.editReply(`${ emojis.error } ${ member }, no track found for the provided URL - this action has been cancelled`);
+        return;
+      }
+
+      const trackData = result.tracks[0];
+      const player = client.players?.get(guild.id);
+      let queue = client.queues?.get(guild.id);
+
+      if (!player || !player.track) {
+        // Initialize new session
+        const newPlayer = await client.lavalink.joinVoiceChannel({
+          guildId: guild.id,
+          channelId: channel.id,
+          shardId: guild.shardId,
+          deaf: true
+        });
+
+        if (!client.queues) client.queues = new Map();
+        queue = {
+          tracks: [],
+          current: null,
+          volume: volume,
+          loop: 'off',
           metadata: {
             channel: eventChannel,
             member,
             timestamp: interaction.createdTimestamp
           }
-        }
+        };
+        client.queues.set(guild.id, queue);
+
+        queue.current = {
+          track: trackData.encoded,
+          info: trackData.info,
+          requester: interaction.user
+        };
+
+        await newPlayer.playTrack({ track: { encoded: trackData.encoded } });
+        await newPlayer.setGlobalVolume(volume);
+        await interaction.editReply(`${ emojis.success } ${ member }, now playing **\`${ trackData.info.title }\`**!`);
+      } else {
+        // Add to existing queue
+        queue.tracks.push({
+          track: trackData.encoded,
+          info: trackData.info,
+          requester: interaction.user
+        });
+        await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ trackData.info.title }\`**!`);
       }
-    );
+    } else {
+      // Discord-player implementation
+      const { track } = await player.play(
+        channel,
+        url,
+        {
+          requestedBy: interaction.user,
+          nodeOptions: {
+            skipOnNoStream: true,
+            leaveOnEnd: true,
+            leaveOnEndCooldown,
+            leaveOnEmpty: settings.leaveOnEmpty,
+            leaveOnEmptyCooldown,
+            volume,
+            metadata: {
+              channel: eventChannel,
+              member,
+              timestamp: interaction.createdTimestamp
+            }
+          }
+        }
+      );
 
-    // Use queue
-    const queue = useQueue(guild.id);
+      // Use queue
+      const queue = useQueue(guild.id);
 
-    // Now that we have a queue initialized,
-    // let's check if we should set our default repeat-mode
-    if (Number.isInteger(settings.repeatMode)) queue.setRepeatMode(settings.repeatMode);
+      // Now that we have a queue initialized,
+      // let's check if we should set our default repeat-mode
+      if (Number.isInteger(settings.repeatMode)) queue.setRepeatMode(settings.repeatMode);
 
-    // Set persistent equalizer preset
-    if (
-      queue.filters.equalizer
-      && settings.equalizer
-      && settings.equalizer !== 'null'
-    ) {
-      queue.filters.equalizer.setEQ(EqualizerConfigurationPreset[settings.equalizer]);
-      queue.filters.equalizer.enable();
+      // Set persistent equalizer preset
+      if (
+        queue.filters.equalizer
+        && settings.equalizer
+        && settings.equalizer !== 'null'
+      ) {
+        queue.filters.equalizer.setEQ(EqualizerConfigurationPreset[settings.equalizer]);
+        queue.filters.equalizer.enable();
+      }
+      else if (queue.filters.equalizer) queue.filters.equalizer.disable();
+
+      // Feedback
+      await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
     }
-    else if (queue.filters.equalizer) queue.filters.equalizer.disable();
-
-    // Feedback
-    await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
   }
   catch (e) {
     const errorMessage = e.message || 'Unknown error occurred';
