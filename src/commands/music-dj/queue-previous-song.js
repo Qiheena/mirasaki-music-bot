@@ -27,23 +27,45 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      // No prev track
-      const history = useHistory(guild.id);
-      const prevTrack = history?.previousTrack;
-      if (!prevTrack) {
-        interaction.reply({ content: `${ emojis.error } ${ member }, no tracks in history - this command has been cancelled` });
-        return;
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        
+        if (!queue) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no active music session - this command has been cancelled` });
+          return;
+        }
+
+        const prevTrack = queue.getPreviousTrack();
+        if (!prevTrack) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no tracks in history - this command has been cancelled` });
+          return;
+        }
+
+        if (addToBackOfQueue) {
+          queue.add(prevTrack);
+        } else {
+          queue.tracks.unshift(prevTrack);
+        }
+
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ prevTrack.info.title }\`** has been added to the ${
+          addToBackOfQueue ? 'back' : 'front'
+        } of the queue`);
+      } else {
+        const history = useHistory(guild.id);
+        const prevTrack = history?.previousTrack;
+        if (!prevTrack) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no tracks in history - this command has been cancelled` });
+          return;
+        }
+
+        const queue = useQueue(guild.id);
+        queue.addTrack(prevTrack);
+
+        if (!addToBackOfQueue) queue.swapTracks(0, queue.tracks.data.length - 1);
+        interaction.reply(`${ emojis.success } ${ member }, **\`${ prevTrack }\`** has been added to the ${
+          addToBackOfQueue ? 'back' : 'front'
+        } of the queue`);
       }
-
-      // Ok
-      const queue = useQueue(guild.id);
-      queue.addTrack(prevTrack);
-
-      // Swap first and last conditionally
-      if (!addToBackOfQueue) queue.swapTracks(0, queue.tracks.data.length - 1);
-      interaction.reply(`${ emojis.success } ${ member }, **\`${ prevTrack }\`** has been added to the ${
-        addToBackOfQueue ? 'back' : 'front'
-      } of the queue`);
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
