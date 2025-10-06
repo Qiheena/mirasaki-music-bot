@@ -131,7 +131,12 @@ module.exports = new ChatInputCommand({
       await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
     }
     catch (e) {
-      interaction.editReply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      const errorMessage = e.message || 'Unknown error occurred';
+      const maxLength = 1900;
+      const truncatedMessage = errorMessage.length > maxLength 
+        ? errorMessage.substring(0, maxLength) + '...\n\n(Error message truncated)'
+        : errorMessage;
+      interaction.editReply(`${ emojis.error } ${ member }, something went wrong:\n\n${ truncatedMessage }`);
     }
   }
 });

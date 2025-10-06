@@ -28,19 +28,46 @@ module.exports = async (client, interaction) => {
     return;
   }
 
+  // Check if interaction has already been responded to
+  if (interaction.responded) {
+    if (DEBUG_AUTOCOMPLETE_RESPONSE_TIME === 'true') {
+      logger.debug(`<${ chalk.cyanBright(commandName) }> | Auto Complete | Skipped (already responded) | Query: "${ chalk.green(query) }"`);
+    }
+    return;
+  }
+
   // Getting the result
-  const result = await autoCompleteQueryHandler.run(client, interaction, query);
+  let result;
+  try {
+    result = await autoCompleteQueryHandler.run(client, interaction, query);
+  } catch (err) {
+    logger.syserr(`Error in autocomplete handler for ${ commandName }:`);
+    console.error(err.stack || err);
+    return;
+  }
+
+  // Double-check before responding (race condition safety)
+  if (interaction.responded) {
+    return;
+  }
 
   // Returning our query result
   interaction.respond(
     // Slicing of the first 25 results, which is max allowed by Discord
     result?.slice(0, AUTOCOMPLETE_MAX_DATA_OPTIONS) || []
   ).catch((err) => {
-    // Unknown Interaction Error
-    if (err.code === 10062) {
-      logger.debug(`Error code 10062 (UNKNOWN_INTERACTION) encountered while responding to autocomplete query in ${ commandName } - this interaction probably expired.`);
+    // Already acknowledged
+    if (err.code === 40060) {
+      if (DEBUG_AUTOCOMPLETE_RESPONSE_TIME === 'true') {
+        logger.debug(`Autocomplete interaction already acknowledged for ${ commandName }`);
+      }
     }
-
+    // Unknown Interaction Error
+    else if (err.code === 10062) {
+      if (DEBUG_AUTOCOMPLETE_RESPONSE_TIME === 'true') {
+        logger.debug(`Error code 10062 (UNKNOWN_INTERACTION) encountered while responding to autocomplete query in ${ commandName } - this interaction probably expired.`);
+      }
+    }
     // Handle unexpected errors
     else {
       logger.syserr(`Unknown error encountered while responding to autocomplete query in ${ commandName }`);
