@@ -61,25 +61,23 @@ const client = new Client({
 
 // Discord Music Player
 const USE_LAVALINK = process.env.USE_LAVALINK === 'true';
-let player;
-let lavalink;
 
-if (USE_LAVALINK) {
-  const { initializeLavalink } = require('./lavalink-setup');
-  logger.info('Using Lavalink for audio streaming');
-} else {
-  player = new Player(client, {
-    skipFFmpeg: false,
-    useLegacyFFmpeg: false,
-    ytdlOptions: {
-      highWaterMark: 1 << 25,
-      filter: 'audioonly',
-      quality: 'highestaudio',
-      liveBuffer: 40000
-    }
-  });
+const player = new Player(client, {
+  skipFFmpeg: false,
+  useLegacyFFmpeg: false,
+  ytdlOptions: {
+    highWaterMark: 1 << 25,
+    filter: 'audioonly',
+    quality: 'highestaudio',
+    liveBuffer: 40000
+  }
+});
+
+if (!USE_LAVALINK) {
   require('./music-player')(player);
   logger.info('Using discord-player for audio streaming');
+} else {
+  logger.info('Using Lavalink for audio streaming (player still initialized for compatibility)');
 }
 
 // Destructuring from env
@@ -288,12 +286,14 @@ if (USE_API === 'true') require('./server/');
 if (modeArg && modeArg.endsWith('test')) process.exit(0);
 
 (async () => {
-  // If you don't want to use all of the extractors and register only the required ones manually, use
-  if (clientConfig.plugins.soundCloud === true) await player.extractors.register(SoundCloudExtractor, {});
-  if (clientConfig.plugins.fileAttachments === true) await player.extractors.register(AttachmentExtractor, {});
-  if (clientConfig.plugins.appleMusic === true) await player.extractors.register(AppleMusicExtractor, {});
-  if (clientConfig.plugins.vimeo === true) await player.extractors.register(VimeoExtractor, {});
-  if (clientConfig.plugins.reverbNation === true) await player.extractors.register(ReverbnationExtractor, {});
+  // Register extractors only if not using Lavalink
+  if (!USE_LAVALINK) {
+    if (clientConfig.plugins.soundCloud === true) await player.extractors.register(SoundCloudExtractor, {});
+    if (clientConfig.plugins.fileAttachments === true) await player.extractors.register(AttachmentExtractor, {});
+    if (clientConfig.plugins.appleMusic === true) await player.extractors.register(AppleMusicExtractor, {});
+    if (clientConfig.plugins.vimeo === true) await player.extractors.register(VimeoExtractor, {});
+    if (clientConfig.plugins.reverbNation === true) await player.extractors.register(ReverbnationExtractor, {});
+  }
 
   // Logging in to our client
   client.login(DISCORD_BOT_TOKEN);
