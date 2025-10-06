@@ -8,7 +8,7 @@ const { commandAutoCompleteOption } = require('../../interactions/autocomplete/c
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'commands' ],
+  aliases: [],
   cooldown: {
     // Use user cooldown type instead of default member
     type: 'user',

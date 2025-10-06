@@ -4,7 +4,7 @@ const { requireSessionConditions } = require('../../modules/music');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'resume' ],
+  aliases: [],
   data: { description: 'Pause/resume the playback, this is a toggle' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

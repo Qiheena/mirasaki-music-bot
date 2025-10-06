@@ -11,7 +11,7 @@ const { createMusicControlButtons } = require('../../modules/music-buttons');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'p', 'pl', 'add' ],
+  aliases: [],
   data: {
     description: 'Play a song. Query SoundCloud, search Vimeo, provide a direct link, etc.',
     options: [

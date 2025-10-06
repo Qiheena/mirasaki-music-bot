@@ -2,6 +2,7 @@ const { ApplicationCommandOptionType } = require('discord.js');
 const { ChatInputCommand } = require('../../classes/Commands');
 
 module.exports = new ChatInputCommand({
+  global: false,
   enabled: process.env.NODE_ENV !== 'production',
   permLevel: 'Developer',
   data: {

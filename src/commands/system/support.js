@@ -11,7 +11,7 @@ module.exports = new ChatInputCommand({
     duration: 15
   },
   clientPerms: [ 'EmbedLinks' ],
-  aliases: [ 'server', 'discord', 'help-server' ],
+  aliases: [],
   data: {
     name: 'support',
     description: 'Get a link to this bot\'s support server'

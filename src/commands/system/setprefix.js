@@ -8,7 +8,7 @@ const { colorResolver } = require('../../util');
 module.exports = new ChatInputCommand({
   global: true,
   permLevel: 'Administrator',
-  aliases: [ 'prefix', 'changeprefix' ],
+  aliases: [],
   data: {
     description: 'Configure the prefix for text commands',
     options: [

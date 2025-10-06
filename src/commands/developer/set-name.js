@@ -2,6 +2,7 @@ const { ApplicationCommandOptionType } = require('discord.js');
 const { ChatInputCommand } = require('../../classes/Commands');
 
 module.exports = new ChatInputCommand({
+  global: false,
   permLevel: 'Developer',
   // Global rate limit of 2 requests per hour
   cooldown: {

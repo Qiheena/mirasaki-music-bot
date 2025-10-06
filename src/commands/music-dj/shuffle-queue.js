@@ -4,7 +4,7 @@ const { requireSessionConditions, queueEmbedResponse } = require('../../modules/
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'shuffle', 'mix', 'random' ],
+  aliases: [],
   data: { description: 'Shuffle the current queue' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

@@ -7,7 +7,7 @@ const SONG_POSITION_OPTION_ID = 'song-position';
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'remove', 'rm', 'delete' ],
+  aliases: [],
   data: {
     description: 'Remove a song that is current in /queue',
     options: [

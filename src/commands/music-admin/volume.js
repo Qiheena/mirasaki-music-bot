@@ -10,7 +10,7 @@ const { clientConfig } = require('../../util');
 module.exports = new ChatInputCommand({
   global: true,
   permLevel: 'Administrator',
-  aliases: [ 'vol', 'v', 'sound' ],
+  aliases: [],
   data: {
     description: 'Change the playback/player\'s volume',
     options: [

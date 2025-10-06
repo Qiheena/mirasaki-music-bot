@@ -4,7 +4,7 @@ const { nowPlayingEmbed, requireSessionConditions } = require('../../modules/mus
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'np' ],
+  aliases: [],
   data: { description: 'Display detailed information on the song that is currently playing' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

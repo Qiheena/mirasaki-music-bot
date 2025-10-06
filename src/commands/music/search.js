@@ -12,7 +12,7 @@ const logger = require('@mirasaki/logger');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 's', 'find', 'lookup' ],
+  aliases: [],
   data: {
     description: 'Search for music and select the option you want to play',
     options: [

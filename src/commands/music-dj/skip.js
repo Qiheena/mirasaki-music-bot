@@ -4,7 +4,7 @@ const { requireSessionConditions } = require('../../modules/music');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: [ 'next', 's', 'sk' ],
+  aliases: [],
   data: { description: 'Skip the currently playing song' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

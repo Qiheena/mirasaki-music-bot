@@ -127,6 +127,32 @@ const sortCommandsByCategory = (commands) => {
 };
 
 /**
+ * Recursively truncates option descriptions that exceed Discord's limits
+ * @param {Array} options Array of command options
+ * @returns {Array} Cleaned options array
+ */
+const cleanOptions = (options) => {
+  if (!options || !Array.isArray(options)) return options;
+  
+  return options.map(option => {
+    const cleaned = { ...option };
+    
+    // Truncate option description if too long
+    // 110 is max supported by Discord API for option descriptions
+    if (cleaned.description && cleaned.description.length > 110) {
+      cleaned.description = `${ cleaned.description.slice(0, 107) }...`;
+    }
+    
+    // Recursively clean nested options (for subcommands and subcommand groups)
+    if (cleaned.options) {
+      cleaned.options = cleanOptions(cleaned.options);
+    }
+    
+    return cleaned;
+  });
+};
+
+/**
  * Return a the commands data object and removes the description field for Context Menu commands
  * @param {ChatInputCommand | MessageContextCommand | UserContextCommand} cmd The command to client API data for
  * @returns {external:DiscordAPIApplicationCommand}
@@ -141,17 +167,21 @@ const cleanAPIData = (cmd) => {
     description: null
   };
 
+  const cleanedData = { ...cmd.data };
+  
   // Slice the description if it's too long
   // 100 is max supported by the Discord API
   // Avoid overwriting original string for help embeds
-  if (cmd.data.description.length > 100) {
-    return {
-      ...cmd.data,
-      description: `${ cmd.data.description.slice(0, 97) }...`
-    };
+  if (cleanedData.description.length > 100) {
+    cleanedData.description = `${ cleanedData.description.slice(0, 97) }...`;
+  }
+  
+  // Clean all nested options recursively
+  if (cleanedData.options) {
+    cleanedData.options = cleanOptions(cleanedData.options);
   }
 
-  return cmd.data;
+  return cleanedData;
 };
 
 /**
