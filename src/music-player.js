@@ -114,11 +114,20 @@ module.exports = (player) => {
     ] });
   });
 
-  player.events.on('disconnect', (queue) => {
-    // Emitted when the bot leaves the voice channel
+  player.events.on('disconnect', async (queue) => {
+    if (queue.metadata.messages && queue.metadata.messages.length > 0) {
+      for (const message of queue.metadata.messages) {
+        try {
+          await message.delete().catch(() => {});
+        } catch (e) {
+        }
+      }
+      queue.metadata.messages = [];
+    }
+
     queue.metadata.channel.send({ embeds: [
       {
-        color: colorResolver(),
+        color: 0xFF69B4,
         title: 'Finished Playing',
         description: 'Queue is now empty, leaving the channel'
       }
@@ -143,12 +152,22 @@ module.exports = (player) => {
     queue.metadata.channel.send(ctx);
   });
 
-  player.events.on('emptyQueue', (queue) => {
+  player.events.on('emptyQueue', async (queue) => {
     const settings = getGuildSettings(queue.guild.id);
-    // Emitted when the player queue has finished
+    
+    if (queue.metadata.messages && queue.metadata.messages.length > 0) {
+      for (const message of queue.metadata.messages) {
+        try {
+          await message.delete().catch(() => {});
+        } catch (e) {
+        }
+      }
+      queue.metadata.messages = [];
+    }
+
     queue.metadata.channel.send({ embeds: [
       {
-        color: colorResolver(),
+        color: 0xFF69B4,
         title: 'Queue Empty',
         description: `Queue is now empty, use **\`/play\`** to add something\nLeaving channel in ${ msToHumanReadableTime((settings.leaveOnEndCooldown ?? clientConfig.defaultLeaveOnEndCooldown) * MS_IN_ONE_SECOND) } if no songs are added/enqueued`
       }

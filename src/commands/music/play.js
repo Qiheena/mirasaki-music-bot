@@ -115,19 +115,61 @@ module.exports = new ChatInputCommand({
           player.on('end', async (data) => {
             if (data.reason === 'replaced') return;
             
+            if (queue.currentMessage) {
+              try {
+                await queue.currentMessage.delete().catch(() => {});
+              } catch (e) {
+              }
+              queue.currentMessage = null;
+            }
+            
             const nextTrack = queue.next();
             if (nextTrack) {
               await player.playTrack({ track: { encoded: nextTrack.track } });
+              
+              const embed = new EmbedBuilder()
+                .setColor(0xFF69B4)
+                .setDescription([
+                  '**Started Playing Song**',
+                  '',
+                  `**Title:** [${nextTrack.info.title}](${nextTrack.info.uri})`,
+                  `**Author:** ${nextTrack.info.author}`,
+                  `**Duration:** ${msToTime(nextTrack.info.length)}`,
+                  `**Requested by:** @${nextTrack.requester.username}`,
+                  '',
+                  `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+                ].join('\n'))
+                .setThumbnail(nextTrack.info.artworkUrl);
+
+              const buttons = createMusicControlButtons(
+                guild.id,
+                true,
+                false,
+                queue.history.length > 0,
+                queue.autoplay
+              );
+
+              const nowPlayingMessage = await queue.metadata.channel?.send({
+                embeds: [embed],
+                components: buttons
+              });
+
+              if (nowPlayingMessage) {
+                queue.currentMessage = nowPlayingMessage;
+              }
             } else {
-              // Queue ended - clear any existing timeout
               if (queue.disconnectTimeout) {
                 clearTimeout(queue.disconnectTimeout);
               }
               
-              // Set new timeout to disconnect if queue remains empty
-              queue.disconnectTimeout = setTimeout(() => {
-                // Double-check queue is still empty and nothing is playing
+              queue.disconnectTimeout = setTimeout(async () => {
                 if (queue.tracks.length === 0 && !queue.current && !player.track) {
+                  if (queue.currentMessage) {
+                    try {
+                      await queue.currentMessage.delete().catch(() => {});
+                    } catch (e) {
+                    }
+                  }
                   client.lavalink.leaveVoiceChannel(guild.id);
                   client.queues.delete(guild.id);
                   client.players.delete(guild.id);
