@@ -8,7 +8,7 @@ const { commandAutoCompleteOption } = require('../../interactions/autocomplete/c
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: ['commands', 'cmd'],
+  aliases: ['h', 'commands', 'cmd'],
   cooldown: {
     // Use user cooldown type instead of default member
     type: 'user',
@@ -17,7 +17,7 @@ module.exports = new ChatInputCommand({
   },
   clientPerms: [ 'EmbedLinks' ],
   data: {
-    description: 'Receive detailed command information',
+    description: 'Get help and see all available bot commands with their usage',
     options: [ commandAutoCompleteOption ]
   },
 

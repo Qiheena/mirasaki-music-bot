@@ -25,10 +25,11 @@ module.exports = new ChatInputCommand({
 
     // Calculating our API latency
     const latency = Math.round(client.ws.ping);
-    const sent = await interaction.reply({
+    const response = await interaction.reply({
       content: 'Pinging...',
-      fetchReply: true
+      withResponse: true
     });
+    const sent = await response.fetch();
     const fcLatency = sent.createdTimestamp - interaction.createdTimestamp;
 
     // Utility function for getting appropriate status emojis

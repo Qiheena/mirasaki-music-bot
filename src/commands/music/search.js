@@ -180,7 +180,7 @@ async function handlePagination (
       ),
       ...usableCtx[pageNow - 1].components
     ],
-    fetchReply: true
+    withResponse: true
   };
   const replyFunction = dynamicInteractionReplyFn(interaction, shouldFollowUpIfReplied);
   const interactionMessage = await replyFunction

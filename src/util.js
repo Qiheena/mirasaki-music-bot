@@ -294,7 +294,7 @@ const handlePagination = async (
   const initialCtx = {
     embeds: [ usableEmbeds[pageNow - 1] ],
     components: getPaginationComponents(pageNow, usableEmbeds.length, prevCustomId, nextCustomId),
-    fetchReply: true
+    withResponse: true
   };
   const replyFunction = dynamicInteractionReplyFn(interaction, shouldFollowUpIfReplied);
   const interactionMessage = await replyFunction

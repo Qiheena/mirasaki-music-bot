@@ -57,7 +57,7 @@ module.exports = new ChatInputCommand({
       if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
         const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
         if (!node) {
-          const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, no Lavalink nodes connected. Try again later.`, fetchReply: true });
+          const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, no Lavalink nodes connected. Try again later.`, withResponse: true });
           setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
           return;
         }
@@ -74,13 +74,13 @@ module.exports = new ChatInputCommand({
         }
       }
     } catch (joinError) {
-      const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, failed to join voice channel: ${joinError.message}`, fetchReply: true });
+      const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, failed to join voice channel: ${joinError.message}`, withResponse: true });
       setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
       return;
     }
 
     // Send "Starting play" message
-    searchMessage = await interaction.reply({ content: `▶️ Starting play **${query}**`, fetchReply: true });
+    searchMessage = await interaction.reply({ content: `▶️ Starting play **${query}**`, withResponse: true });
 
     // Return if attachment content type is not allowed
     if (attachment) {
