@@ -78,8 +78,8 @@ module.exports = new ChatInputCommand({
       return;
     }
 
-    // Send "Searching" message
-    searchMessage = await interaction.reply({ content: `🔍 Searching **${query}**...`, fetchReply: true });
+    // Send "Starting play" message
+    searchMessage = await interaction.reply({ content: `▶️ Starting play **${query}**`, fetchReply: true });
 
     // Return if attachment content type is not allowed
     if (attachment) {
