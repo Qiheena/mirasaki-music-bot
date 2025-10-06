@@ -59,8 +59,8 @@ const client = new Client({
   }
 });
 
-// Discord Music Player
-const USE_LAVALINK = process.env.USE_LAVALINK === 'true';
+// Discord Music Player - Default to Lavalink for ultra-fast performance
+const USE_LAVALINK = process.env.USE_LAVALINK !== 'false';
 
 const player = new Player(client, {
   skipFFmpeg: false,
