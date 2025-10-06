@@ -146,7 +146,7 @@ const requireSessionConditions = (
   // No queue
   else if (requireVoiceSession === true) {
     const hasSession = isLavalink 
-      ? (client.players?.get(guild.id) && client.queues?.get(guild.id))
+      ? (client.players?.get(guild.id)?.track && client.queues?.get(guild.id))
       : usePlayer(guild.id)?.queue;
     
     if (!hasSession) {
