@@ -4,6 +4,28 @@
 
 A Discord music bot built with discord.js and discord-player that provides high-quality audio streaming through Lavalink integration. The bot supports multiple audio sources including SoundCloud, Apple Music, Vimeo, and ReverbNation. It features a command-based architecture with role-based permissions, persistent guild settings, and advanced playback controls including audio filters, equalizers, and queue management.
 
+## Recent Changes (October 2025)
+
+### Critical Bug Fix: Interaction Timeout Issues (October 6, 2025)
+
+**Problem**: The bot was experiencing "Unknown interaction" errors (DiscordAPIError[10062]) when users tried to use the `/play` command. Discord requires all interactions to be acknowledged within 3 seconds, but the bot was timing out.
+
+**Root Causes**:
+1. Autocomplete queries were taking 0.4-6.5 seconds per keystroke
+2. The `/play` command was deferring too late (after validation checks)
+3. Slow autocomplete searches were blocking the event loop
+
+**Solution Implemented**:
+1. **Play Command** (`src/commands/music/play.js`): Moved `deferReply()` to execute immediately after a quick voice channel check, ensuring Discord receives acknowledgment within 3 seconds
+2. **Autocomplete** (`src/interactions/autocomplete/query.js`): Added intelligent caching system:
+   - Caches search results for 30 seconds
+   - Returns cached results instantly (<1ms)
+   - Times out slow searches after 2.5 seconds
+   - Falls back to cached results on timeout
+   - Auto-cleans old cache entries (max 100 entries)
+
+**Result**: All interactions now respond within 3 seconds, eliminating timeout errors and providing a smooth user experience.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

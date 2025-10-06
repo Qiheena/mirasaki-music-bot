@@ -34,23 +34,28 @@ module.exports = new ChatInputCommand({
     const query = interaction.options.getString('query', true);
     const attachment = interaction.options.getAttachment('file');
 
-    // Check state
+    // Quick check: user must be in voice channel
+    if (!member.voice?.channel) {
+      return interaction.reply({ content: `${ emojis.error } ${ member }, you must be in a voice channel to use this command!`, ephemeral: true });
+    }
+
+    // CRITICAL: Defer immediately to acknowledge within 3 seconds
+    await interaction.deferReply();
+
+    // Check state (after deferring)
     if (!requireSessionConditions(interaction, false, true, false)) return;
 
     // Return if attachment content type is not allowed
     if (attachment) {
       const contentIsAllowed = isAllowedContentType(ALLOWED_CONTENT_TYPE, attachment?.contentType ?? 'unknown');
       if (!contentIsAllowed.strict) {
-        interaction.reply({ content: `${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.` });
+        interaction.editReply({ content: `${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.` });
         return;
       }
     }
 
     // Ok, safe to access voice channel
     const channel = member.voice?.channel;
-
-    // Let's defer the interaction as things can take time to process
-    await interaction.deferReply();
 
     try {
       // Check if Lavalink is being used
