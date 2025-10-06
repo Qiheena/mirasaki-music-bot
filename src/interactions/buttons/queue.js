@@ -1,9 +1,9 @@
-const { ComponentCommand } = require('../classes/Commands');
-const { requireSessionConditions } = require('../modules/music');
+const { ComponentCommand } = require('../../classes/Commands');
+const { requireSessionConditions } = require('../../modules/music');
 const { useQueue } = require('discord-player');
 const { EmbedBuilder } = require('discord.js');
-const { colorResolver } = require('../util');
-const { msToTime } = require('../lavalink-setup');
+const { colorResolver } = require('../../util');
+const { msToTime } = require('../../lavalink-setup');
 
 module.exports = new ComponentCommand({
   run: async (client, interaction) => {

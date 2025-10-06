@@ -1,5 +1,5 @@
-const { ComponentCommand } = require('../classes/Commands');
-const { requireSessionConditions } = require('../modules/music');
+const { ComponentCommand } = require('../../classes/Commands');
+const { requireSessionConditions } = require('../../modules/music');
 const { useHistory } = require('discord-player');
 
 module.exports = new ComponentCommand({

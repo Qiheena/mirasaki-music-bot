@@ -1,5 +1,5 @@
-const { ComponentCommand } = require('../classes/Commands');
-const { requireSessionConditions } = require('../modules/music');
+const { ComponentCommand } = require('../../classes/Commands');
+const { requireSessionConditions } = require('../../modules/music');
 const { usePlayer } = require('discord-player');
 
 module.exports = new ComponentCommand({
@@ -30,7 +30,7 @@ module.exports = new ComponentCommand({
         const success = guildPlayerNode.skip();
         await interaction.reply({ 
           content: success
-            ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack }\`**`
+            ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack.title }\`**`
             : `${ emojis.error } ${ member }, something went wrong - couldn't skip current playing song`,
           ephemeral: true
         });
