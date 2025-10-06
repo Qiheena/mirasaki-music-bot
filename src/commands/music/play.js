@@ -116,7 +116,7 @@ module.exports = new ChatInputCommand({
             
             const nextTrack = queue.next();
             if (nextTrack) {
-              await player.playTrack({ track: nextTrack.track });
+              await player.playTrack({ track: { encoded: nextTrack.track } });
             } else {
               // Queue ended - clear any existing timeout
               if (queue.disconnectTimeout) {
@@ -127,7 +127,7 @@ module.exports = new ChatInputCommand({
               queue.disconnectTimeout = setTimeout(() => {
                 // Double-check queue is still empty and nothing is playing
                 if (queue.tracks.length === 0 && !queue.current && !player.track) {
-                  player.disconnect();
+                  client.lavalink.leaveVoiceChannel(guild.id);
                   client.queues.delete(guild.id);
                   client.players.delete(guild.id);
                 }
@@ -182,8 +182,8 @@ module.exports = new ChatInputCommand({
         if (!player.track) {
           const track = queue.next();
           if (track) {
-            await player.playTrack({ track: track.track });
-            player.setVolume(queue.volume);
+            await player.playTrack({ track: { encoded: track.track } });
+            await player.setGlobalVolume(queue.volume);
             
             // Send now playing message
             await queue.metadata.channel?.send({
