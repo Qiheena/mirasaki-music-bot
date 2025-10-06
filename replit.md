@@ -6,6 +6,22 @@ A Discord music bot built with discord.js and discord-player that provides high-
 
 ## Recent Changes (October 2025)
 
+### Version 1.4.0 - Interactive Music Control Buttons (October 6, 2025)
+
+#### New Features
+1. **Interactive Music Control Buttons** - Added 8 interactive buttons for easy music control:
+   - ⏮️ Previous - Play the previous track from history
+   - ⏸️/▶️ Pause/Resume - Toggle playback with dynamic icon
+   - ⏭️ Next - Skip to the next track
+   - 🔉 Volume Down - Decrease volume by 10%
+   - 🔊 Volume Up - Increase volume by 10%
+   - 🔁 Autoplay - Toggle autoplay mode
+   - 📜 Queue - View the current queue
+2. **Beautiful Pink Message Format** - Redesigned "Now Playing" messages with pink color (0xFF69B4)
+3. **Auto-Delete Functionality** - Buttons automatically delete when songs end or bot leaves voice channel
+4. **RasaVedic Branding** - Added "❤️ RasaVedic" branding to all music messages
+5. **State-Aware Buttons** - Buttons change color based on state (enabled/disabled, paused/playing)
+
 ### Version 1.3.0 - Major Update: Lavalink Integration & Performance Fixes (October 6, 2025)
 
 #### New Features
