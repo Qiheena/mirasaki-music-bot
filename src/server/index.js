@@ -28,7 +28,26 @@ const { NODE_ENV, PORT = 3000 } = process.env;
 const app = express();
 
 // Routes Middleware
-app.get('/', (req, res) => res.sendStatus(200));
+// Health check endpoint for Render
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'online',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    service: 'RasaVedic Music Bot'
+  });
+});
+
+// Additional health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use('/api/commands', commandRoutes);
 
 // Serving our generated client documentation as root
@@ -41,7 +60,9 @@ app.use(
 app.use(express.static('public'));
 
 // Actively listen for requests to our API/backend
+// Bind to 0.0.0.0 for Render/cloud deployment compatibility
 app.listen(
   PORT,
-  logger.success(chalk.yellow.bold(`API running in ${ NODE_ENV }-mode on port ${ PORT }`))
+  '0.0.0.0',
+  () => logger.success(chalk.yellow.bold(`API running in ${ NODE_ENV }-mode on port ${ PORT }`))
 );
