@@ -45,13 +45,25 @@ module.exports = new ChatInputCommand({
           return;
         }
 
-        // Skip to track - remove all tracks before skipToIndex
+        // Skip to track - remove all tracks before skipToIndex (not including target)
         const targetTrack = queue.tracks[skipToIndex];
-        queue.tracks.splice(0, skipToIndex);
-        queue.current = targetTrack;
-        queue.tracks.shift();
         
-        await player.stopTrack();
+        // Remove all tracks before the target
+        const removedTracks = queue.tracks.splice(0, skipToIndex);
+        
+        // Remove target from queue (now at position 0)
+        const playTrack = queue.tracks.shift();
+        
+        // If loop is queue, add removed tracks and current to end of queue
+        if (queue.loop === 'queue') {
+          if (queue.current) removedTracks.unshift(queue.current);
+          queue.tracks.push(...removedTracks);
+        }
+        
+        // Set target as current and play it
+        queue.current = playTrack;
+        await player.playTrack({ track: { encoded: playTrack.track } });
+        
         await interaction.reply(`⏩ ${ member }, skipping to **\`${ targetTrack.info.title }\`**`);
       } else {
         // Check has queue

@@ -46,12 +46,23 @@ module.exports = new ChatInputCommand({
           return;
         }
 
-        // Jump to track - move tracks before jumpToIndex to end of queue (if loop is queue)
+        // Jump to track - rotate queue to preserve all tracks
         const targetTrack = queue.tracks[jumpToIndex];
-        queue.current = targetTrack;
-        queue.tracks.splice(jumpToIndex, 1);
         
-        await player.stopTrack();
+        // Split queue into before and after target
+        const beforeTarget = queue.tracks.slice(0, jumpToIndex);
+        const afterTarget = queue.tracks.slice(jumpToIndex + 1);
+        
+        // Rebuild queue: tracks after target, then current (if exists), then tracks before target
+        const newQueue = [...afterTarget];
+        if (queue.current) {
+          newQueue.push(queue.current);
+        }
+        newQueue.push(...beforeTarget);
+        
+        queue.tracks = newQueue;
+        queue.current = targetTrack;
+        await player.playTrack({ track: { encoded: targetTrack.track } });
         await interaction.reply(`${ emojis.success } ${ member }, jumping to **\`${ targetTrack.info.title }\`**!`);
       } else {
         // Check has queue
