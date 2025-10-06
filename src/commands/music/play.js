@@ -36,27 +36,60 @@ module.exports = new ChatInputCommand({
     const attachment = interaction.options.getAttachment('file');
 
     // Quick check: user must be in voice channel
-    if (!member.voice?.channel) {
+    const channel = member.voice?.channel;
+    if (!channel) {
       return interaction.reply({ content: `${ emojis.error } ${ member }, you must be in a voice channel to use this command!`, ephemeral: true });
     }
 
-    // CRITICAL: Defer immediately to acknowledge within 3 seconds
-    await interaction.deferReply();
+    // Check permissions before joining
+    if (!channel.viewable || !channel.joinable) {
+      return interaction.reply({ content: `${ emojis.error } ${ member }, I don't have permission to join your voice channel!`, ephemeral: true });
+    }
 
-    // Check state (after deferring)
-    if (!requireSessionConditions(interaction, false, true, false)) return;
+    if (channel.full && !channel.members.some((m) => m.id === client.user.id)) {
+      return interaction.reply({ content: `${ emojis.error } ${ member }, your voice channel is full!`, ephemeral: true });
+    }
+
+    // Join voice channel IMMEDIATELY
+    let searchMessage;
+    try {
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
+        if (!node) {
+          const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, no Lavalink nodes connected. Try again later.`, fetchReply: true });
+          setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
+          return;
+        }
+
+        let player = client.players.get(guild.id);
+        if (!player) {
+          player = await client.lavalink.joinVoiceChannel({
+            guildId: guild.id,
+            channelId: channel.id,
+            shardId: guild.shardId ?? 0,
+            deaf: true
+          });
+          client.players.set(guild.id, player);
+        }
+      }
+    } catch (joinError) {
+      const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, failed to join voice channel: ${joinError.message}`, fetchReply: true });
+      setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
+      return;
+    }
+
+    // Send "Searching" message
+    searchMessage = await interaction.reply({ content: `🔍 Searching **${query}**...`, fetchReply: true });
 
     // Return if attachment content type is not allowed
     if (attachment) {
       const contentIsAllowed = isAllowedContentType(ALLOWED_CONTENT_TYPE, attachment?.contentType ?? 'unknown');
       if (!contentIsAllowed.strict) {
-        interaction.editReply({ content: `${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.` });
+        await searchMessage.edit({ content: `${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.` });
+        setTimeout(() => searchMessage.delete().catch(() => {}), 10000);
         return;
       }
     }
-
-    // Ok, safe to access voice channel
-    const channel = member.voice?.channel;
 
     try {
       // Check if Lavalink is being used
