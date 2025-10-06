@@ -11,20 +11,6 @@ module.exports = async (client) => {
     chalk.grey(`#${ client.user.discriminator }`)
   } after ${ upTimeStr }`);
 
-  // Initialize Lavalink if enabled
-  if (process.env.USE_LAVALINK === 'true') {
-    try {
-      const { initializeLavalink } = require('../../lavalink-setup');
-      client.lavalink = initializeLavalink(client);
-      await client.lavalink.init(client.user);
-      logger.success('Lavalink initialized successfully');
-    } catch (error) {
-      logger.syserr('Failed to initialize Lavalink:');
-      logger.printErr(error);
-      logger.warn('Bot will continue without Lavalink. Music commands may not work properly.');
-    }
-  }
-
   // Calculating the membercount
   const memberCount = client.guilds.cache.reduce(
     (previousValue, currentValue) => previousValue += currentValue.memberCount, 0

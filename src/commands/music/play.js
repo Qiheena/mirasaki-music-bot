@@ -3,13 +3,10 @@ const { ChatInputCommand } = require('../../classes/Commands');
 const {
   requireSessionConditions, ALLOWED_CONTENT_TYPE, musicEventChannel
 } = require('../../modules/music');
-const { clientConfig, isAllowedContentType } = require('../../util');
+const { clientConfig, isAllowedContentType, colorResolver } = require('../../util');
 const { getGuildSettings } = require('../../modules/db');
-const {
-  useMainPlayer, useQueue, EqualizerConfigurationPreset
-} = require('discord-player');
 const { MS_IN_ONE_SECOND } = require('../../constants');
-const player = useMainPlayer();
+const { msToTime } = require('../../lavalink-setup');
 
 module.exports = new ChatInputCommand({
   global: true,
@@ -31,11 +28,10 @@ module.exports = new ChatInputCommand({
       }
     ]
   },
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   run: async (client, interaction) => {
     const { emojis } = client.container;
     const { member, guild } = interaction;
-    const query = interaction.options.getString('query', true); // we need input/query to play
+    const query = interaction.options.getString('query', true);
     const attachment = interaction.options.getAttachment('file');
 
     // Check state
@@ -50,87 +46,225 @@ module.exports = new ChatInputCommand({
       }
     }
 
-    // Ok, safe to access voice channel and initialize
+    // Ok, safe to access voice channel
     const channel = member.voice?.channel;
 
     // Let's defer the interaction as things can take time to process
     await interaction.deferReply();
 
     try {
-      // Check is valid
-      const searchResult = await player
-        .search(attachment?.url ?? query, { requestedBy: interaction.user })
-        .catch(() => null);
-      if (!searchResult.hasTracks()) {
-        interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
-        return;
-      }
+      // Check if Lavalink is being used
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        // Use Shoukaku (Lavalink) - get first available node
+        const node = [...client.lavalink.nodes.values()].find(n => n.state === 2); // state 2 = connected
+        if (!node) {
+          interaction.editReply(`${ emojis.error } ${ member }, no Lavalink nodes are connected. Please try again later.`);
+          return;
+        }
 
-      // Resolve settings
-      const settings = getGuildSettings(guild.id);
+        // Search for the track
+        const searchQuery = attachment?.url ?? query;
+        const result = await node.rest.resolve(searchQuery.startsWith('http') ? searchQuery : `ytsearch:${searchQuery}`);
+        
+        if (!result || (result.loadType === 'empty' || result.loadType === 'error')) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          return;
+        }
 
-      // Use thread channels
-      let eventChannel = interaction.channel;
-      if (settings.useThreadSessions) {
-        eventChannel = await musicEventChannel(client, interaction);
-        if (eventChannel === false) return;
-      }
+        // Get or create player
+        let player = client.players.get(guild.id);
+        if (!player) {
+          player = await node.joinChannel({
+            guildId: guild.id,
+            channelId: channel.id,
+            shardId: guild.shardId ?? 0,
+            deaf: true
+          });
+          client.players.set(guild.id, player);
+        }
 
-      // Resolve volume for this session - clamp max 100
-      let volume = settings.volume ?? clientConfig.defaultVolume;
-      // Note: Don't increase volume for attachments as having to check
-      // and adjust on every song end isn't perfect
-      volume = Math.min(100, volume);
+        // Get or create queue
+        let queue = client.queues.get(guild.id);
+        if (!queue) {
+          const { createQueue } = require('../../lavalink-setup');
+          const settings = getGuildSettings(guild.id);
+          
+          let eventChannel = interaction.channel;
+          if (settings.useThreadSessions) {
+            eventChannel = await musicEventChannel(client, interaction);
+            if (eventChannel === false) return;
+          }
 
-      // Resolve cooldown
-      const leaveOnEndCooldown = ((settings.leaveOnEndCooldown ?? 2) * MS_IN_ONE_SECOND);
-      const leaveOnEmptyCooldown = ((settings.leaveOnEmptyCooldown ?? 2) * MS_IN_ONE_SECOND);
+          queue = createQueue(guild.id, {
+            channel: eventChannel,
+            member,
+            timestamp: interaction.createdTimestamp,
+            voiceChannel: channel
+          });
+          
+          queue.volume = Math.min(100, settings.volume ?? clientConfig.defaultVolume);
+          client.queues.set(guild.id, queue);
 
-      // nodeOptions are the options for guild node (aka your queue in simple word)
-      // we can access this metadata object using queue.metadata later on
-      const { track } = await player.play(
-        channel,
-        searchResult,
-        {
-          requestedBy: interaction.user,
-          nodeOptions: {
-            skipOnNoStream: true,
-            leaveOnEnd: true,
-            leaveOnEndCooldown,
-            leaveOnEmpty: settings.leaveOnEmpty,
-            leaveOnEmptyCooldown,
-            volume,
-            metadata: {
-              channel: eventChannel,
-              member,
-              timestamp: interaction.createdTimestamp
+          // Set up player events
+          player.on('end', async (data) => {
+            if (data.reason === 'replaced') return;
+            
+            const nextTrack = queue.next();
+            if (nextTrack) {
+              await player.playTrack({ track: nextTrack.track });
+            } else {
+              // Queue ended - clear any existing timeout
+              if (queue.disconnectTimeout) {
+                clearTimeout(queue.disconnectTimeout);
+              }
+              
+              // Set new timeout to disconnect if queue remains empty
+              queue.disconnectTimeout = setTimeout(() => {
+                // Double-check queue is still empty and nothing is playing
+                if (queue.tracks.length === 0 && !queue.current && !player.track) {
+                  player.disconnect();
+                  client.queues.delete(guild.id);
+                  client.players.delete(guild.id);
+                }
+              }, 60000);
             }
+          });
+
+          player.on('exception', (data) => {
+            console.error('Player exception:', data);
+            queue.metadata.channel?.send(`${ emojis.error } An error occurred while playing: ${data.exception?.message || 'Unknown error'}`);
+          });
+        }
+
+        // Handle playlist or single track
+        let tracks = [];
+        if (result.loadType === 'playlist') {
+          tracks = result.data.tracks.map(track => ({
+            track: track.encoded,
+            info: track.info,
+            requester: interaction.user
+          }));
+        } else if (result.loadType === 'track') {
+          tracks = [{
+            track: result.data.encoded,
+            info: result.data.info,
+            requester: interaction.user
+          }];
+        } else if (result.loadType === 'search') {
+          tracks = [{
+            track: result.data[0].encoded,
+            info: result.data[0].info,
+            requester: interaction.user
+          }];
+        }
+
+        if (tracks.length === 0) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\``);
+          return;
+        }
+
+        // Clear any disconnect timeout since we're adding new tracks
+        if (queue.disconnectTimeout) {
+          clearTimeout(queue.disconnectTimeout);
+          queue.disconnectTimeout = null;
+        }
+
+        // Add tracks to queue
+        const firstTrack = tracks[0];
+        tracks.forEach(track => queue.add(track));
+
+        // If nothing is playing, start playback
+        if (!player.track) {
+          const track = queue.next();
+          if (track) {
+            await player.playTrack({ track: track.track });
+            player.setVolume(queue.volume);
+            
+            // Send now playing message
+            await queue.metadata.channel?.send({
+              embeds: [{
+                color: colorResolver(),
+                title: '🎵 Now Playing',
+                description: `**[${track.info.title}](${track.info.uri})**`,
+                thumbnail: { url: track.info.artworkUrl },
+                footer: { 
+                  text: `Duration: ${msToTime(track.info.length)} | Requested by: ${track.requester.username}` 
+                }
+              }]
+            });
           }
         }
-      );
 
-      // Use queue
-      const queue = useQueue(guild.id);
+        // Feedback
+        const trackTitle = firstTrack.info.title;
+        if (tracks.length > 1) {
+          await interaction.editReply(`${ emojis.success } ${ member }, enqueued **${tracks.length}** tracks! First: **\`${ trackTitle }\`**`);
+        } else {
+          await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ trackTitle }\`**!`);
+        }
 
-      // Now that we have a queue initialized,
-      // let's check if we should set our default repeat-mode
-      if (Number.isInteger(settings.repeatMode)) queue.setRepeatMode(settings.repeatMode);
+      } else {
+        // Use discord-player (fallback)
+        const { useMainPlayer, useQueue, EqualizerConfigurationPreset } = require('discord-player');
+        const player = useMainPlayer();
 
-      // Set persistent equalizer preset
-      if (
-        queue.filters.equalizer
-        && settings.equalizer
-        && settings.equalizer !== 'null'
-      ) {
-        queue.filters.equalizer.setEQ(EqualizerConfigurationPreset[settings.equalizer]);
-        queue.filters.equalizer.enable();
+        const searchResult = await player
+          .search(attachment?.url ?? query, { requestedBy: interaction.user })
+          .catch(() => null);
+        
+        if (!searchResult || !searchResult.hasTracks()) {
+          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          return;
+        }
+
+        const settings = getGuildSettings(guild.id);
+        let eventChannel = interaction.channel;
+        if (settings.useThreadSessions) {
+          eventChannel = await musicEventChannel(client, interaction);
+          if (eventChannel === false) return;
+        }
+
+        let volume = settings.volume ?? clientConfig.defaultVolume;
+        volume = Math.min(100, volume);
+
+        const leaveOnEndCooldown = ((settings.leaveOnEndCooldown ?? 2) * MS_IN_ONE_SECOND);
+        const leaveOnEmptyCooldown = ((settings.leaveOnEmptyCooldown ?? 2) * MS_IN_ONE_SECOND);
+
+        const { track } = await player.play(
+          channel,
+          searchResult,
+          {
+            requestedBy: interaction.user,
+            nodeOptions: {
+              skipOnNoStream: true,
+              leaveOnEnd: true,
+              leaveOnEndCooldown,
+              leaveOnEmpty: settings.leaveOnEmpty,
+              leaveOnEmptyCooldown,
+              volume,
+              metadata: {
+                channel: eventChannel,
+                member,
+                timestamp: interaction.createdTimestamp
+              }
+            }
+          }
+        );
+
+        const queue = useQueue(guild.id);
+        if (Number.isInteger(settings.repeatMode)) queue.setRepeatMode(settings.repeatMode);
+
+        if (queue.filters.equalizer && settings.equalizer && settings.equalizer !== 'null') {
+          queue.filters.equalizer.setEQ(EqualizerConfigurationPreset[settings.equalizer]);
+          queue.filters.equalizer.enable();
+        } else if (queue.filters?.equalizer) {
+          queue.filters.equalizer.disable();
+        }
+
+        await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
       }
-      else if (queue.filters?.equalizer) queue.filters.equalizer.disable();
-
-      // Feedback
-      await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
-    }
-    catch (e) {
+    } catch (e) {
+      console.error('Play command error:', e);
       const errorMessage = e.message || 'Unknown error occurred';
       const maxLength = 1900;
       const truncatedMessage = errorMessage.length > maxLength 

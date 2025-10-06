@@ -310,6 +310,19 @@ if (modeArg && modeArg.endsWith('test')) process.exit(0);
     logger.success('ReverbNation extractor registered');
   }
 
+  // Initialize Shoukaku (Lavalink) BEFORE login
+  if (USE_LAVALINK) {
+    try {
+      const { initializeLavalink } = require('./lavalink-setup');
+      client.lavalink = initializeLavalink(client);
+      logger.success('Shoukaku (Lavalink) initialized - waiting for node connection...');
+    } catch (error) {
+      logger.syserr('Failed to initialize Shoukaku (Lavalink):');
+      logger.printErr(error);
+      logger.warn('Bot will continue without Lavalink. Music commands may not work properly.');
+    }
+  }
+
   // Logging in to our client
   client.login(DISCORD_BOT_TOKEN);
 })();

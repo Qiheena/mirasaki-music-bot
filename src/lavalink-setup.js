@@ -1,144 +1,114 @@
 const logger = require('@mirasaki/logger');
-const { LavalinkManager } = require('lavalink-client');
+const { Shoukaku, Connectors } = require('shoukaku');
 
 /**
- * Initialize and configure Lavalink for the Discord bot
+ * Initialize and configure Shoukaku (Lavalink wrapper) for the Discord bot
  * @param {Client} client - The Discord.js client
- * @returns {LavalinkManager} The configured Lavalink manager
+ * @returns {Shoukaku} The configured Shoukaku instance
  */
 function initializeLavalink(client) {
-  const lavalinkNodes = [
+  const nodes = [
     {
-      authorization: process.env.LAVALINK_PASSWORD || 'https://dsc.gg/ajidevserver',
-      host: process.env.LAVALINK_HOST || 'lava-v4.ajieblogs.eu.org',
-      port: parseInt(process.env.LAVALINK_PORT || '80'),
-      id: process.env.LAVALINK_NODE_ID || 'main-node',
-      secure: process.env.LAVALINK_SECURE === 'true' || false,
-      retryAmount: 10,
-      retryDelay: 3000,
-      requestSignalTimeoutMS: 15000
+      name: process.env.LAVALINK_NODE_ID || 'main-node',
+      url: `${process.env.LAVALINK_HOST || 'lava-v4.ajieblogs.eu.org'}:${process.env.LAVALINK_PORT || '80'}`,
+      auth: process.env.LAVALINK_PASSWORD || 'https://dsc.gg/ajidevserver',
+      secure: process.env.LAVALINK_SECURE === 'true'
     }
   ];
 
-  logger.info(`Initializing Lavalink with ultra-fast node: ${lavalinkNodes[0].host}:${lavalinkNodes[0].port}`);
+  logger.info(`Initializing Shoukaku with node: ${nodes[0].name} at ${nodes[0].url}`);
 
-  const lavalink = new LavalinkManager({
-    nodes: lavalinkNodes,
-    sendToShard: (guildId, payload) => {
-      const guild = client.guilds.cache.get(guildId);
-      if (guild) {
-        const shardId = guild.shardId ?? 0;
-        const shard = client.ws.shards.get(shardId);
-        if (shard) {
-          shard.send(payload);
-        } else {
-          client.ws.broadcast(payload);
-        }
-      }
-    },
-    client: {
-      id: process.env.DISCORD_CLIENT_ID || client.user?.id,
-      username: 'Music Bot'
-    },
-    autoSkip: true,
-    playerOptions: {
-      clientBasedPositionUpdateInterval: 100,
-      defaultSearchPlatform: 'ytsearch',
-      volumeDecrementer: 0.75,
-      onDisconnect: {
-        autoReconnect: true,
-        destroyPlayer: false
-      },
-      onEmptyQueue: {
-        destroyAfterMs: 60_000
-      },
-      useUnresolvedData: true
-    },
-    queueOptions: {
-      maxPreviousTracks: 25
-    },
-    advancedOptions: {
-      maxRetryAttempts: 10,
-      retryAttemptsInterval: 3000,
-      debugOptions: {
-        noAudio: false,
-        playerDestroy: {
-          debugLog: false
-        }
+  const shoukaku = new Shoukaku(
+    new Connectors.DiscordJS(client),
+    nodes,
+    {
+      resume: true,
+      resumeTimeout: 30,
+      resumeByLibrary: true,
+      reconnectTries: 10,
+      reconnectInterval: 3000,
+      restTimeout: 15000,
+      moveOnDisconnect: false,
+      userAgent: 'Discord Music Bot (Shoukaku)',
+      structures: {
+        rest: undefined,
+        player: undefined
       }
     }
+  );
+
+  // Node event listeners
+  shoukaku.on('ready', (name) => {
+    logger.success(`Lavalink node ready: ${name}`);
   });
 
-  // Forward raw Discord events to Lavalink
-  client.on('raw', (d) => lavalink.sendRawData(d));
-
-  // Lavalink event listeners
-  lavalink.on('nodeConnect', (node) => {
-    logger.success(`Lavalink node connected: ${node.id} (${node.options.host}:${node.options.port})`);
-  });
-
-  lavalink.on('nodeDisconnect', (node, reason) => {
-    logger.warn(`Lavalink node disconnected: ${node.id} - Reason: ${reason?.message || 'Unknown'}`);
-  });
-
-  lavalink.on('nodeError', (node, error) => {
-    logger.syserr(`Lavalink node error on ${node.id}:`);
+  shoukaku.on('error', (name, error) => {
+    logger.syserr(`Lavalink node error on ${name}:`);
     console.error(error);
   });
 
-  lavalink.on('nodeReconnect', (node) => {
-    logger.info(`Lavalink node reconnecting: ${node.id}`);
+  shoukaku.on('close', (name, code, reason) => {
+    logger.warn(`Lavalink node disconnected: ${name} - Code: ${code}, Reason: ${reason || 'Unknown'}`);
   });
 
-  lavalink.on('trackStart', (player, track) => {
-    const channel = client.channels.cache.get(player.textChannelId);
-    if (channel) {
-      channel.send({
-        embeds: [{
-          color: 0x00ff00,
-          title: '🎵 Now Playing',
-          description: `**[${track.info.title}](${track.info.uri})**`,
-          thumbnail: { url: track.info.artworkUrl },
-          footer: { 
-            text: `Duration: ${msToTime(track.info.duration)} | Requested by: ${track.requester?.username || 'Unknown'}` 
-          }
-        }]
-      }).catch(console.error);
-    }
+  shoukaku.on('reconnecting', (name, tries) => {
+    logger.info(`Lavalink node reconnecting: ${name} (attempt ${tries})`);
   });
 
-  lavalink.on('trackEnd', (player, track, payload) => {
+  shoukaku.on('disconnect', (name, count) => {
+    logger.warn(`Lavalink node disconnected: ${name} (${count} players affected)`);
+  });
+
+  shoukaku.on('debug', (name, info) => {
     if (process.env.DEBUG_ENABLED === 'true') {
-      logger.debug(`Track ended: ${track.info.title} - Reason: ${payload.reason}`);
+      logger.debug(`[${name}] ${info}`);
     }
   });
 
-  lavalink.on('queueEnd', (player) => {
-    const channel = client.channels.cache.get(player.textChannelId);
-    if (channel) {
-      channel.send({
-        embeds: [{
-          color: 0xffa500,
-          title: '📭 Queue Empty',
-          description: 'The queue has finished playing. Add more songs with `/play`!'
-        }]
-      }).catch(console.error);
-    }
-  });
+  // Store queues and players in Maps for each guild
+  client.queues = new Map();
+  client.players = new Map();
 
-  lavalink.on('playerCreate', (player) => {
-    if (process.env.DEBUG_ENABLED === 'true') {
-      logger.debug(`Player created for guild: ${player.guildId}`);
-    }
-  });
+  return shoukaku;
+}
 
-  lavalink.on('playerDestroy', (player) => {
-    if (process.env.DEBUG_ENABLED === 'true') {
-      logger.debug(`Player destroyed for guild: ${player.guildId}`);
+/**
+ * Create a simple queue manager for a guild
+ * @param {string} guildId - The guild ID
+ * @param {Object} metadata - Queue metadata (channel, member, etc.)
+ * @returns {Object} Queue object
+ */
+function createQueue(guildId, metadata) {
+  return {
+    guildId,
+    tracks: [],
+    current: null,
+    volume: 50,
+    loop: 'off', // 'off', 'track', 'queue'
+    metadata,
+    
+    add(track) {
+      this.tracks.push(track);
+    },
+    
+    next() {
+      if (this.loop === 'track') return this.current;
+      if (this.loop === 'queue' && this.current) this.tracks.push(this.current);
+      this.current = this.tracks.shift() || null;
+      return this.current;
+    },
+    
+    clear() {
+      this.tracks = [];
+    },
+    
+    shuffle() {
+      for (let i = this.tracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
+      }
     }
-  });
-
-  return lavalink;
+  };
 }
 
 /**
@@ -147,6 +117,7 @@ function initializeLavalink(client) {
  * @returns {string} Formatted time string
  */
 function msToTime(ms) {
+  if (!ms || ms === 0) return '0:00';
   const seconds = Math.floor((ms / 1000) % 60);
   const minutes = Math.floor((ms / (1000 * 60)) % 60);
   const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
@@ -157,4 +128,4 @@ function msToTime(ms) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-module.exports = { initializeLavalink };
+module.exports = { initializeLavalink, createQueue, msToTime };
