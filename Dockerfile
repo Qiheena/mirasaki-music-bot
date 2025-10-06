@@ -1,10 +1,10 @@
-FROM node:19-slim
+FROM node:20-slim
 
 # Create app/working/bot directory
 RUN mkdir -p /app
 WORKDIR /app
 
-# Before installing ytdl mod, install ffmpeg
+# Install ffmpeg for audio processing
 RUN apt-get update && apt-get install 'ffmpeg' -y --no-install-recommends \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*

@@ -6,25 +6,54 @@ A Discord music bot built with discord.js and discord-player that provides high-
 
 ## Recent Changes (October 2025)
 
-### Critical Bug Fix: Interaction Timeout Issues (October 6, 2025)
+### Version 1.3.0 - Major Update: Lavalink Integration & Performance Fixes (October 6, 2025)
 
-**Problem**: The bot was experiencing "Unknown interaction" errors (DiscordAPIError[10062]) when users tried to use the `/play` command. Discord requires all interactions to be acknowledged within 3 seconds, but the bot was timing out.
+#### New Features
+1. **Lavalink v4 Integration** - Added full Shoukaku support for ultra-fast audio streaming
+2. **Smart Autocomplete Caching** - Implemented intelligent search caching (30s cache, 2.5s timeout)
+3. **Dual-Mode Support** - Bot now supports both Discord-player and Lavalink modes
+
+#### Critical Bug Fixes
+
+**Problem**: The bot was experiencing "Unknown interaction" errors (DiscordAPIError[10062]) when users tried to use music commands. Discord requires all interactions to be acknowledged within 3 seconds, but the bot was timing out.
 
 **Root Causes**:
 1. Autocomplete queries were taking 0.4-6.5 seconds per keystroke
 2. The `/play` command was deferring too late (after validation checks)
 3. Slow autocomplete searches were blocking the event loop
+4. Incorrect Shoukaku API usage causing playback failures
 
-**Solution Implemented**:
-1. **Play Command** (`src/commands/music/play.js`): Moved `deferReply()` to execute immediately after a quick voice channel check, ensuring Discord receives acknowledgment within 3 seconds
-2. **Autocomplete** (`src/interactions/autocomplete/query.js`): Added intelligent caching system:
+**Solutions Implemented**:
+
+1. **Play Command** (`src/commands/music/play.js`):
+   - Moved `deferReply()` to execute immediately after quick voice channel check
+   - Fixed Shoukaku API calls:
+     - `node.joinChannel()` → `client.lavalink.joinVoiceChannel()`
+     - `player.playTrack()` → `player.playTrack({ track: { encoded: trackString } })`
+     - `player.setVolume()` → `player.setGlobalVolume()`
+     - `player.disconnect()` → `client.lavalink.leaveVoiceChannel()`
+
+2. **Autocomplete** (`src/interactions/autocomplete/query.js`):
    - Caches search results for 30 seconds
    - Returns cached results instantly (<1ms)
    - Times out slow searches after 2.5 seconds
    - Falls back to cached results on timeout
    - Auto-cleans old cache entries (max 100 entries)
 
-**Result**: All interactions now respond within 3 seconds, eliminating timeout errors and providing a smooth user experience.
+3. **Music Commands Updated** - Enhanced all music commands to support both modes:
+   - `volume.js` - Supports Lavalink volume control
+   - `pause.js` - Supports Lavalink pause/resume
+   - `skip.js` - Supports Lavalink skip functionality
+   - `stop.js` - Supports Lavalink disconnect
+
+#### Files Updated
+- `package.json` - Version bump to 1.3.0
+- `CHANGELOG.md` - Detailed changelog entry
+- `Dockerfile` - Updated to Node 20
+- `README.md` - Added Lavalink features
+- All music command files for dual-mode support
+
+**Result**: All interactions now respond within 3 seconds, music playback works perfectly with Lavalink, and the bot provides a smooth, reliable user experience.
 
 ## User Preferences
 

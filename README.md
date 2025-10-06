@@ -88,6 +88,8 @@
 
 <h2 id="features">🤩 Features (non-exhaustive)</h2>
 
+- **NEW**: Lavalink v4 Integration (Shoukaku) for ultra-fast audio streaming
+- **NEW**: Smart autocomplete with intelligent caching (< 3 seconds response time)
 - Easy installation
 - Settings with persistency
 - 60+ total audio filters
@@ -112,6 +114,7 @@
   - `/swap-songs`
   - and so much more
 - Save songs by sending it to your DMs
+- Dual-mode support: Discord-player and Lavalink
 
 <br/>
 <h2 id="demo">🎁 Demo</h2>

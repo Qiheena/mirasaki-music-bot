@@ -1,3 +1,22 @@
+## [1.3.0](https://github.com/Mirasaki/mirasaki-music-bot/compare/v1.2.2...v1.3.0) (2025-10-06)
+
+
+### Features
+
+* **Lavalink Integration**: Added full Shoukaku/Lavalink v4 support for ultra-fast audio streaming
+* **Smart Autocomplete**: Implemented intelligent caching system for music search with 30-second cache and 2.5s timeout
+* **Performance Optimizations**: Fixed Discord interaction timeout issues by optimizing response times (<3 seconds)
+
+### Bug Fixes
+
+* **Interaction Timeouts**: Fixed DiscordAPIError[10062] by moving `deferReply()` to execute immediately
+* **Shoukaku API**: Updated all music commands to use correct Shoukaku v4 API methods
+  - Changed `node.joinChannel()` to `client.lavalink.joinVoiceChannel()`
+  - Fixed `player.playTrack()` format to use `{ track: { encoded: trackString } }`
+  - Updated `player.setVolume()` to `player.setGlobalVolume()`
+  - Changed `player.disconnect()` to `client.lavalink.leaveVoiceChannel()`
+* **Command Updates**: Enhanced volume, pause, skip, and stop commands to support both Lavalink and discord-player modes
+
 ## [1.2.2](https://github.com/Mirasaki/mirasaki-music-bot/compare/v1.2.1...v1.2.2) (2024-08-10)
 
 

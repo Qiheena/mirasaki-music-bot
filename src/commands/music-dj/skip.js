@@ -8,24 +8,34 @@ module.exports = new ChatInputCommand({
   data: { description: 'Skip the currently playing song' },
   run: async (client, interaction) => {
     const { emojis } = client.container;
-    const { member } = interaction;
+    const { member, guild } = interaction;
 
     // Check state
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      const guildPlayerNode = usePlayer(interaction.guild.id);
-      // #requireVoiceSession doesn't check current track,
-      // only session/player state
-      const currentTrack = guildPlayerNode?.queue?.currentTrack;
-      if (!currentTrack) {
-        interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played - this command has been cancelled` });
-        return;
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        const queue = client.queues.get(guild.id);
+        
+        if (!player || !player.track || !queue?.current) {
+          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played` });
+        }
+        
+        const currentTrackTitle = queue.current.info.title;
+        await player.stopTrack();
+        await interaction.reply(`${ emojis.success } ${ member }, skipped **\`${ currentTrackTitle }\`**`);
+      } else {
+        const guildPlayerNode = usePlayer(interaction.guild.id);
+        const currentTrack = guildPlayerNode?.queue?.currentTrack;
+        if (!currentTrack) {
+          return interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played` });
+        }
+        const success = guildPlayerNode.skip();
+        await interaction.reply(success
+          ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack }\`**`
+          : `${ emojis.error } ${ member }, something went wrong - couldn't skip current playing song`);
       }
-      const success = guildPlayerNode.skip();
-      await interaction.reply(success
-        ? `${ emojis.success } ${ member }, skipped **\`${ currentTrack }\`**`
-        : `${ emojis.error } ${ member }, something went wrong - couldn't skip current playing song`);
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

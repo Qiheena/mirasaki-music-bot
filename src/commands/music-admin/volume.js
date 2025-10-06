@@ -34,15 +34,24 @@ module.exports = new ChatInputCommand({
 
     // Resolve settings
     const settings = getGuildSettings(guild.id);
-    if (!volume) { // Yes, that includes 0
+    if (!volume) {
       interaction.reply(`${ emojis.success } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
       return;
     }
 
     try {
-      // Check if current player should be updated
-      const guildPlayerNode = usePlayer(interaction.guild.id);
-      if (guildPlayerNode?.isPlaying()) guildPlayerNode.setVolume(volume);
+      // Update player volume based on mode
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        if (player && player.track) {
+          await player.setGlobalVolume(volume);
+        }
+        const queue = client.queues.get(guild.id);
+        if (queue) queue.volume = volume;
+      } else {
+        const guildPlayerNode = usePlayer(interaction.guild.id);
+        if (guildPlayerNode?.isPlaying()) guildPlayerNode.setVolume(volume);
+      }
 
       // Perform and notify collection that the document has changed
       settings.volume = volume;

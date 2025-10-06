@@ -18,9 +18,26 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      const queue = useQueue(guild.id);
-      queue.delete();
-      await interaction.reply(`${ emojis.success } ${ member }, the queue has been cleared and the player was disconnected.`);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        const queue = client.queues.get(guild.id);
+        
+        if (player) {
+          await player.stopTrack();
+          client.lavalink.leaveVoiceChannel(guild.id);
+        }
+        if (queue) {
+          queue.clear();
+          client.queues.delete(guild.id);
+        }
+        client.players.delete(guild.id);
+        
+        await interaction.reply(`${ emojis.success } ${ member }, the queue has been cleared and the player was disconnected.`);
+      } else {
+        const queue = useQueue(guild.id);
+        queue.delete();
+        await interaction.reply(`${ emojis.success } ${ member }, the queue has been cleared and the player was disconnected.`);
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
