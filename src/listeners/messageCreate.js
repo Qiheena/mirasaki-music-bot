@@ -5,12 +5,16 @@ const { getPermissionLevel } = require('../handlers/permissions');
 const { clientConfig } = require('../util');
 
 module.exports = async (client, message) => {
+  console.log(`[DEBUG] Message received from ${message.author.tag}: "${message.content}"`);
+  
   if (message.author.bot) return;
   if (!message.guild) return;
 
   const { member, guild, channel, content, author } = message;
   const { commands } = client.container;
   const { ownerId } = clientConfig.permissions;
+
+  console.log(`[DEBUG] Author ID: ${author.id}, Owner ID: ${ownerId}, Is Owner: ${author.id === ownerId}`);
 
   let prefix;
   let commandName;
@@ -37,6 +41,8 @@ module.exports = async (client, message) => {
   } else {
     const settings = getGuildSettings(guild.id);
     prefix = settings.prefix;
+    
+    console.log(`[DEBUG] Current prefix: "${prefix}", Message starts with prefix: ${content.startsWith(prefix)}`);
 
     if (!content.startsWith(prefix)) return;
 
@@ -46,6 +52,7 @@ module.exports = async (client, message) => {
   }
 
   let command = commands.get(commandName);
+  console.log(`[DEBUG] Looking for command: "${commandName}", Found: ${!!command}`);
   if (!command) return;
 
   const actualCommandName = command.isAlias && command.aliasFor ? command.aliasFor : commandName;
