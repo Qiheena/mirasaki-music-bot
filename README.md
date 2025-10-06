@@ -11,7 +11,7 @@
 
 </div>
 <p align="center">
-  A free, open-source JavaScript music bot created with <a href="https://discord.js.org/#/"><code>discord.js</code></a> and <a href="https://discord-player.js.org/"><code>discord-player</code></a>. Complete (45+ commands) with persistent settings, effects, filters, auto-play, DJ-roles, and so much more.
+  A free, open-source JavaScript music bot created with <a href="https://discord.js.org/#/"><code>discord.js</code></a> and <a href="https://discord-player.js.org/"><code>discord-player</code></a>. Complete (60+ commands) with full Lavalink v4 support, persistent settings, autoplay, sleep timer, history tracking, advanced queue management, and so much more.
 </p>
 
 <p align="center">
@@ -88,33 +88,34 @@
 
 <h2 id="features">🤩 Features (non-exhaustive)</h2>
 
-- **NEW**: Lavalink v4 Integration (Shoukaku) for ultra-fast audio streaming
-- **NEW**: Smart autocomplete with intelligent caching (< 3 seconds response time)
-- Easy installation
-- Settings with persistency
-- 60+ total audio filters
-- Multiple server support
-- Vote skip
-- Search, play, and lyrics autocomplete enabled
-- Search play buttons
-- DJ Roles
-- Dedicated music channels
-- Thread sessions
-- Auto-play (24/7)
-- Biquad filter + Equalizer
-- 4 Repeat/loop modes
-- Full track history
-- Slash commands and modern Discord components
-- Lyrics
-- Volume (persistent)
-- Full playback control
-  - with over 20 player-control commands like
-  - `/pause`
-  - `/skip-to`
-  - `/swap-songs`
-  - and so much more
-- Save songs by sending it to your DMs
-- Dual-mode support: Discord-player and Lavalink
+- **✨ Full Lavalink v4 Integration** (Shoukaku) for ultra-fast, reliable audio streaming
+- **🎯 Smart Autocomplete** with intelligent caching (< 3 seconds response time)
+- **🎵 60+ Commands** including all music playback controls
+- **🔄 Autoplay Mode** - automatically queue related songs when queue is empty
+- **💤 Sleep Timer** - set a timer to automatically stop playback
+- **📜 Full Track History** - view and replay previously played songs
+- **🎛️ Advanced Queue Management**
+  - Jump to track (preserves queue)
+  - Skip to track (removes tracks)
+  - Move, swap, and remove songs
+  - Play previous song
+  - Queue previous song
+- **⚙️ Settings with Persistency** - all configurations saved across restarts
+- **🎚️ 60+ Audio Filters** (discord-player mode)
+- **🎛️ Biquad Filter + Equalizer** (discord-player mode)
+- **🔁 4 Repeat/Loop Modes** - off, track, queue, autoplay
+- **🗳️ Vote Skip** - democratic skip system
+- **🔍 Smart Search** with interactive results and play buttons
+- **🎤 DJ Roles** - restrict certain commands to DJ role holders
+- **📍 Dedicated Music Channels** - configure specific channels for music
+- **🧵 Thread Sessions** - organize music sessions in threads
+- **💬 Slash Commands** and modern Discord components
+- **🎤 Lyrics Support** - display song lyrics with autocomplete
+- **🔊 Volume Control** (persistent across sessions)
+- **💾 Save Songs** - DM yourself the current playing song
+- **🔀 Dual-Mode Support**: Discord-player and Lavalink
+- **🐳 Docker Support** - easy deployment with Docker
+- **🌐 Multiple Server Support** - use in unlimited servers
 
 <br/>
 <h2 id="demo">🎁 Demo</h2>
