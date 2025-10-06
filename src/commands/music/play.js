@@ -127,17 +127,15 @@ module.exports = new ChatInputCommand({
             if (nextTrack) {
               await player.playTrack({ track: { encoded: nextTrack.track } });
               
+              const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
               const embed = new EmbedBuilder()
                 .setColor(0xFF69B4)
                 .setDescription([
                   '**Started Playing Song**',
                   '',
-                  `**Title:** [${nextTrack.info.title}](${nextTrack.info.uri})`,
-                  `**Author:** ${nextTrack.info.author}`,
-                  `**Duration:** ${msToTime(nextTrack.info.length)}`,
-                  `**Requested by:** @${nextTrack.requester.username}`,
+                  `[${nextTrack.info.title}](${nextTrack.info.uri})`,
                   '',
-                  `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+                  `<t:${indiaTime}:T> || ❤️ RasaVedic`
                 ].join('\n'))
                 .setThumbnail(nextTrack.info.artworkUrl);
 
@@ -228,17 +226,15 @@ module.exports = new ChatInputCommand({
             await player.playTrack({ track: { encoded: track.track } });
             await player.setGlobalVolume(queue.volume);
             
+            const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
             const embed = new EmbedBuilder()
               .setColor(0xFF69B4)
               .setDescription([
                 '**Started Playing Song**',
                 '',
-                `**Title:** [${track.info.title}](${track.info.uri})`,
-                `**Author:** ${track.info.author}`,
-                `**Duration:** ${msToTime(track.info.length)}`,
-                `**Requested by:** @${track.requester.username}`,
+                `[${track.info.title}](${track.info.uri})`,
                 '',
-                `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+                `<t:${indiaTime}:T> || ❤️ RasaVedic`
               ].join('\n'))
               .setThumbnail(track.info.artworkUrl);
 

@@ -20,17 +20,15 @@ module.exports = (player) => {
       queue.metadata.messages = [];
     }
 
+    const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
     const embed = new EmbedBuilder()
       .setColor(0xFF69B4)
       .setDescription([
         '**Started Playing Song**',
         '',
-        `**Title:** [${ escapeMarkdown(track.title) }](${ track.url })`,
-        `**Author:** ${ track.author }`,
-        `**Duration:** ${ track.duration }`,
-        `**Requested by:** @${ queue.metadata.member?.user?.username || 'Unknown' }`,
+        `[${ escapeMarkdown(track.title) }](${ track.url })`,
         '',
-        `<t:${Math.floor(Date.now() / 1000)}:R> || ❤️ RasaVedic`
+        `<t:${indiaTime}:T> || ❤️ RasaVedic`
       ].join('\n'))
       .setThumbnail(track.thumbnail);
 
