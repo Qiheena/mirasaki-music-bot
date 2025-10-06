@@ -1,6 +1,7 @@
 const { ComponentCommand } = require('../../classes/Commands');
 const { requireSessionConditions } = require('../../modules/music');
 const { usePlayer } = require('discord-player');
+const { createMusicControlButtons } = require('../../modules/music-buttons');
 
 module.exports = new ComponentCommand({
   run: async (client, interaction) => {
@@ -12,10 +13,28 @@ module.exports = new ComponentCommand({
     try {
       if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
         const player = client.players.get(guild.id);
+        const queue = client.queues.get(guild.id);
         if (!player || !player.track) {
           return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
         }
         await player.setPaused(false);
+        
+        if (queue?.currentMessage) {
+          const buttons = createMusicControlButtons(
+            guild.id,
+            true,
+            false,
+            queue.history.length > 0,
+            queue.autoplay,
+            queue.loop
+          );
+          
+          try {
+            await queue.currentMessage.edit({ components: buttons });
+          } catch (e) {
+          }
+        }
+        
         await interaction.reply(`${ emojis.success } ${ member }, resumed playback`);
       } else {
         const guildPlayerNode = usePlayer(guild.id);
