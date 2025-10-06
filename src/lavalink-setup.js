@@ -43,7 +43,7 @@ function initializeLavalink(client) {
     autoSkip: true,
     playerOptions: {
       clientBasedPositionUpdateInterval: 100,
-      defaultSearchPlatform: 'scsearch',
+      defaultSearchPlatform: 'ytsearch',
       volumeDecrementer: 0.75,
       onDisconnect: {
         autoReconnect: true,

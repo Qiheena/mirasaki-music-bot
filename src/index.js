@@ -287,28 +287,27 @@ if (modeArg && modeArg.endsWith('test')) process.exit(0);
 
 (async () => {
   // Register extractors BEFORE login to ensure they're ready
-  if (!USE_LAVALINK) {
-    logger.info('Registering music extractors...');
-    if (clientConfig.plugins.soundCloud === true) {
-      await player.extractors.register(SoundCloudExtractor, {});
-      logger.success('SoundCloud extractor registered');
-    }
-    if (clientConfig.plugins.fileAttachments === true) {
-      await player.extractors.register(AttachmentExtractor, {});
-      logger.success('Attachment extractor registered');
-    }
-    if (clientConfig.plugins.appleMusic === true) {
-      await player.extractors.register(AppleMusicExtractor, {});
-      logger.success('AppleMusic extractor registered');
-    }
-    if (clientConfig.plugins.vimeo === true) {
-      await player.extractors.register(VimeoExtractor, {});
-      logger.success('Vimeo extractor registered');
-    }
-    if (clientConfig.plugins.reverbNation === true) {
-      await player.extractors.register(ReverbnationExtractor, {});
-      logger.success('ReverbNation extractor registered');
-    }
+  // Note: Even with Lavalink, we register minimal extractors for autocomplete compatibility
+  logger.info('Registering music extractors...');
+  if (clientConfig.plugins.soundCloud === true) {
+    await player.extractors.register(SoundCloudExtractor, {});
+    logger.success('SoundCloud extractor registered');
+  }
+  if (clientConfig.plugins.fileAttachments === true) {
+    await player.extractors.register(AttachmentExtractor, {});
+    logger.success('Attachment extractor registered');
+  }
+  if (clientConfig.plugins.appleMusic === true) {
+    await player.extractors.register(AppleMusicExtractor, {});
+    logger.success('AppleMusic extractor registered');
+  }
+  if (clientConfig.plugins.vimeo === true) {
+    await player.extractors.register(VimeoExtractor, {});
+    logger.success('Vimeo extractor registered');
+  }
+  if (clientConfig.plugins.reverbNation === true) {
+    await player.extractors.register(ReverbnationExtractor, {});
+    logger.success('ReverbNation extractor registered');
   }
 
   // Logging in to our client
