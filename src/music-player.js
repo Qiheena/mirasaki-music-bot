@@ -23,21 +23,25 @@ module.exports = (player) => {
     const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
     const embed = new EmbedBuilder()
       .setColor(0xFF69B4)
+      .setTitle(track.title)
+      .setURL(track.url)
       .setDescription([
-        '**Started Playing Song**',
+        `**Author:** ${track.author || 'Unknown'}`,
+        `**Duration:** ${track.duration}`,
+        `**Requested by:** <@${track.requestedBy?.id || 'Unknown'}>`,
         '',
-        `[${ escapeMarkdown(track.title) }](${ track.url })`,
-        '',
-        `<t:${indiaTime}:T> || ❤️ RasaVedic`
+        `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
       ].join('\n'))
       .setThumbnail(track.thumbnail);
 
+    const loopMode = queue.repeatMode === 1 ? 'track' : queue.repeatMode === 2 ? 'queue' : 'off';
     const buttons = createMusicControlButtons(
       queue.guild.id,
       true,
       queue.node.isPaused(),
       queue.history.tracks.data.length > 0,
-      queue.repeatMode === 3
+      queue.repeatMode === 3,
+      loopMode
     );
 
     const nowPlayingMessage = await queue.metadata.channel.send({

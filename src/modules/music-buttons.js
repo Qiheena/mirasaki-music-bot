@@ -1,40 +1,44 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-function createMusicControlButtons(guildId, isPlaying = false, isPaused = false, hasHistory = false, autoplayEnabled = false) {
+function createMusicControlButtons(guildId, isPlaying = false, isPaused = false, hasHistory = false, autoplayEnabled = false, loopMode = 'off') {
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('previous')
-      .setLabel('Previous')
-      .setStyle(hasHistory ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setLabel('⏮')
+      .setStyle(hasHistory ? ButtonStyle.Success : ButtonStyle.Secondary)
       .setDisabled(!hasHistory),
     new ButtonBuilder()
       .setCustomId(isPaused ? 'resume' : 'pause')
-      .setLabel(isPaused ? 'Resume' : 'Pause')
-      .setStyle(isPaused ? ButtonStyle.Success : ButtonStyle.Primary)
+      .setLabel(isPaused ? '▶️' : '⏸')
+      .setStyle(isPlaying ? ButtonStyle.Success : ButtonStyle.Secondary)
       .setDisabled(!isPlaying),
     new ButtonBuilder()
       .setCustomId('next')
-      .setLabel('Next')
-      .setStyle(ButtonStyle.Primary)
-      .setDisabled(!isPlaying)
+      .setLabel('⏭')
+      .setStyle(isPlaying ? ButtonStyle.Success : ButtonStyle.Secondary)
+      .setDisabled(!isPlaying),
+    new ButtonBuilder()
+      .setCustomId('loop')
+      .setLabel(loopMode === 'track' ? '🔂' : loopMode === 'queue' ? '🔁' : '↻')
+      .setStyle(loopMode !== 'off' ? ButtonStyle.Success : ButtonStyle.Secondary)
   );
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('volume-down')
-      .setLabel('Volume Down')
+      .setLabel('🔉')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('volume-up')
-      .setLabel('Volume Up')
+      .setLabel('🔊')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('autoplay')
-      .setLabel('Autoplay')
+      .setLabel('🎲')
       .setStyle(autoplayEnabled ? ButtonStyle.Success : ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('queue')
-      .setLabel('Queue')
+      .setLabel('📜')
       .setStyle(ButtonStyle.Secondary)
   );
 

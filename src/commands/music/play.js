@@ -163,12 +163,14 @@ module.exports = new ChatInputCommand({
               const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
               const embed = new EmbedBuilder()
                 .setColor(0xFF69B4)
+                .setTitle(nextTrack.info.title)
+                .setURL(nextTrack.info.uri)
                 .setDescription([
-                  '**Started Playing Song**',
+                  `**Author:** ${nextTrack.info.author || 'Unknown'}`,
+                  `**Duration:** ${msToTime(nextTrack.info.length)}`,
+                  `**Requested by:** <@${nextTrack.requester.id}>`,
                   '',
-                  `[${nextTrack.info.title}](${nextTrack.info.uri})`,
-                  '',
-                  `<t:${indiaTime}:T> || ❤️ RasaVedic`
+                  `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
                 ].join('\n'))
                 .setThumbnail(nextTrack.info.artworkUrl);
 
@@ -177,7 +179,8 @@ module.exports = new ChatInputCommand({
                 true,
                 false,
                 queue.history.length > 0,
-                queue.autoplay
+                queue.autoplay,
+                queue.loop
               );
 
               const nowPlayingMessage = await queue.metadata.channel?.send({
@@ -262,12 +265,14 @@ module.exports = new ChatInputCommand({
             const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
             const embed = new EmbedBuilder()
               .setColor(0xFF69B4)
+              .setTitle(track.info.title)
+              .setURL(track.info.uri)
               .setDescription([
-                '**Started Playing Song**',
+                `**Author:** ${track.info.author || 'Unknown'}`,
+                `**Duration:** ${msToTime(track.info.length)}`,
+                `**Requested by:** <@${track.requester.id}>`,
                 '',
-                `[${track.info.title}](${track.info.uri})`,
-                '',
-                `<t:${indiaTime}:T> || ❤️ RasaVedic`
+                `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
               ].join('\n'))
               .setThumbnail(track.info.artworkUrl);
 
@@ -276,7 +281,8 @@ module.exports = new ChatInputCommand({
               true,
               false,
               queue.history.length > 0,
-              queue.autoplay
+              queue.autoplay,
+              queue.loop
             );
 
             const nowPlayingMessage = await queue.metadata.channel?.send({
