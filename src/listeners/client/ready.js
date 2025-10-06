@@ -13,10 +13,16 @@ module.exports = async (client) => {
 
   // Initialize Lavalink if enabled
   if (process.env.USE_LAVALINK === 'true') {
-    const { initializeLavalink } = require('../../lavalink-setup');
-    client.lavalink = initializeLavalink(client);
-    await client.lavalink.init(client.user);
-    logger.success('Lavalink initialized successfully');
+    try {
+      const { initializeLavalink } = require('../../lavalink-setup');
+      client.lavalink = initializeLavalink(client);
+      await client.lavalink.init(client.user);
+      logger.success('Lavalink initialized successfully');
+    } catch (error) {
+      logger.syserr('Failed to initialize Lavalink:');
+      logger.printErr(error);
+      logger.warn('Bot will continue without Lavalink. Music commands may not work properly.');
+    }
   }
 
   // Calculating the membercount

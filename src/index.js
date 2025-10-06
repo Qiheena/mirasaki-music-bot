@@ -1,11 +1,6 @@
 // Importing from packages
 const { existsSync } = require('fs');
 require('dotenv').config({ path: existsSync('.env') ? '.env' : '.env.example' });
-
-if (!process.env.USE_LAVALINK || process.env.USE_LAVALINK === 'false') {
-  process.env.USE_LAVALINK = 'true';
-}
-
 const logger = require('@mirasaki/logger');
 const chalk = require('chalk');
 const {
