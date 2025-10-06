@@ -13,10 +13,19 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
-      // Rewind to 0:00
-      const queue = useQueue(guild.id);
-      queue.node.seek(0);
-      await interaction.reply(`${ emojis.success } ${ member }, replaying current track!`);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        if (!player || !player.track) {
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
+        }
+        await player.seekTo(0);
+        await interaction.reply(`${ emojis.success } ${ member }, replaying current track!`);
+      } else {
+        // Rewind to 0:00
+        const queue = useQueue(guild.id);
+        queue.node.seek(0);
+        await interaction.reply(`${ emojis.success } ${ member }, replaying current track!`);
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

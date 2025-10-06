@@ -14,21 +14,50 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, true, false, false)) return;
 
     try {
-      const queue = useQueue(guild.id);
-      if (!queue) {
-        interaction.reply({ content: `${ emojis.error } ${ member }, queue is currently empty. You should totally \`/play\` something - but that's just my opinion.` });
-        return;
-      }
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const queue = client.queues.get(guild.id);
+        const player = client.players.get(guild.id);
+        
+        if (!queue || !queue.current) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, no music is currently being played` });
+          return;
+        }
 
-      // Ok, display the queue!
-      const { currentTrack } = queue;
-      if (!currentTrack) {
-        interaction.reply(`${ emojis.error } ${ member }, can't fetch information on currently displaying song - please try again later`);
-        return;
-      }
+        const track = queue.current;
+        const { colorResolver } = require('../../util');
+        const { EmbedBuilder } = require('discord.js');
+        const { msToTime } = require('../../lavalink-setup');
+        
+        const npEmbed = new EmbedBuilder()
+          .setColor(colorResolver())
+          .setTitle('🎵 Now Playing')
+          .setDescription(`**[${track.info.title}](${track.info.uri})**`)
+          .addFields({
+            name: 'Details',
+            value: `👑 **Author:** ${track.info.author}\n🚩 **Length:** ${msToTime(track.info.length)}\n📖 **Requested by:** ${track.requester.username}`,
+            inline: false
+          })
+          .setThumbnail(track.info.artworkUrl)
+          .setFooter({ text: `Volume: ${queue.volume}% | Loop: ${queue.loop}` });
+        
+        interaction.reply({ embeds: [npEmbed] });
+      } else {
+        const queue = useQueue(guild.id);
+        if (!queue) {
+          interaction.reply({ content: `${ emojis.error } ${ member }, queue is currently empty. You should totally \`/play\` something - but that's just my opinion.` });
+          return;
+        }
 
-      const npEmbed = nowPlayingEmbed(queue);
-      interaction.reply({ embeds: [ npEmbed ] });
+        // Ok, display the queue!
+        const { currentTrack } = queue;
+        if (!currentTrack) {
+          interaction.reply(`${ emojis.error } ${ member }, can't fetch information on currently displaying song - please try again later`);
+          return;
+        }
+
+        const npEmbed = nowPlayingEmbed(queue);
+        interaction.reply({ embeds: [ npEmbed ] });
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);

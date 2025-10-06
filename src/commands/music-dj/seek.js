@@ -46,16 +46,34 @@ module.exports = new ChatInputCommand({
     // Check state
     if (!requireSessionConditions(interaction, true)) return;
 
-    // Not a point in duration
-    if (totalMs > useQueue(guild.id).currentTrack?.durationMS) {
-      interaction.reply(`${ emojis.error } ${ member }, not a valid timestamp for song - this action has been cancelled`);
-      return;
-    }
-
     try {
-      const queue = useQueue(guild.id);
-      queue.node.seek(totalMs);
-      await interaction.reply(`🔍 ${ member }, setting playback timestamp to ${ String(minutes).padStart(2, '0') }:${ String(seconds).padStart(2, '0') }`);
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        const queue = client.queues.get(guild.id);
+        
+        if (!player || !player.track || !queue?.current) {
+          return interaction.reply(`${ emojis.error } ${ member }, no music is currently being played`);
+        }
+        
+        // Not a point in duration
+        if (totalMs > queue.current.info.length) {
+          interaction.reply(`${ emojis.error } ${ member }, not a valid timestamp for song - this action has been cancelled`);
+          return;
+        }
+        
+        await player.seekTo(totalMs);
+        await interaction.reply(`🔍 ${ member }, setting playback timestamp to ${ String(minutes).padStart(2, '0') }:${ String(seconds).padStart(2, '0') }`);
+      } else {
+        // Not a point in duration
+        if (totalMs > useQueue(guild.id).currentTrack?.durationMS) {
+          interaction.reply(`${ emojis.error } ${ member }, not a valid timestamp for song - this action has been cancelled`);
+          return;
+        }
+
+        const queue = useQueue(guild.id);
+        queue.node.seek(totalMs);
+        await interaction.reply(`🔍 ${ member }, setting playback timestamp to ${ String(minutes).padStart(2, '0') }:${ String(seconds).padStart(2, '0') }`);
+      }
     }
     catch (e) {
       interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
