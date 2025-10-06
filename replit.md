@@ -6,6 +6,25 @@ RasaVedic is a Discord music bot built with discord.js and discord-player, desig
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (October 2025)
+
+### Prefix Command Emoji Fix
+- **Fixed automatic emoji addition**: Removed the automatic 😊 emoji that was being added to all prefix command responses via `formatBotMessage` function
+- **Clean message formatting**: Only emojis in the actual message content (like error ❌, success ✅) now appear
+- **Consistent pink branding**: Updated to use brand pink color (0xFF69B4) consistently
+
+### Play Command Enhancement
+- **Beautiful metadata display**: Play command already features complete metadata with:
+  - Song title (linked to source URL)
+  - Author/Artist name
+  - Duration in readable format
+  - Requester mention
+  - High-quality thumbnail
+  - Indian time zone (GMT+5:30) display
+  - "❤️ made by @rasavedic ❤️" footer
+- **Pink color theme**: All embeds use consistent pink color (0xFF69B4)
+- **Interactive buttons**: Volume controls, playback controls, queue management, and autoplay toggle
+
 ## System Architecture
 
 ### Core Framework
@@ -71,6 +90,12 @@ Preferred communication style: Simple, everyday language.
 - **Nodemon**: For development auto-reload.
 
 ### Deployment Options
-- **Docker**: Containerized deployment.
+- **Docker**: Containerized deployment with FFmpeg pre-installed.
 - **PM2**: Process management for Node.js applications.
 - **Replit**: Cloud-based hosting compatibility.
+- **Render**: Fully compatible with Render deployment
+  - Procfile configured for background worker deployment
+  - Node.js version: 20.x (compatible with Render)
+  - All production dependencies included
+  - Required environment variables: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID, OWNER_ID, NODE_ENV=production
+  - Optional: Lavalink configuration (USE_LAVALINK, LAVALINK_HOST, LAVALINK_PORT, LAVALINK_PASSWORD)
