@@ -12,8 +12,9 @@ const logger = require('@mirasaki/logger');
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: [ 's', 'find', 'lookup' ],
   data: {
-    description: 'Play a song. Query SoundCloud, search Vimeo, provide a direct link, etc.',
+    description: 'Search for music and select the option you want to play',
     options: [
       {
         name: 'query',

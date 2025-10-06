@@ -8,6 +8,7 @@ const {
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: [ 'loop', 'repeat', 'rm' ],
   data: {
     description: 'Configure specific repeat-type, or disable repeat altogether',
     options: [

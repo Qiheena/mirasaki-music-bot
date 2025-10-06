@@ -197,7 +197,8 @@ const registerGlobalCommands = async (client) => {
   const combinedData = commands.concat(contextMenus);
   const globalCommandData = combinedData
     .filter((cmd) => cmd.global === true
-      && cmd.enabled === true)
+      && cmd.enabled === true
+      && !cmd.isAlias)
     .map(cleanAPIData);
 
   // Extensive debug logging
@@ -235,8 +236,8 @@ const registerTestServerCommands = async (client) => {
   const { commands, contextMenus } = client.container;
   const combinedData = commands.concat(contextMenus);
   const testServerCommandData = combinedData
-    // Filter out global and disabled commands
-    .filter((cmd) => (cmd.global === false && cmd.enabled === true))
+    // Filter out global and disabled commands and aliases
+    .filter((cmd) => (cmd.global === false && cmd.enabled === true && !cmd.isAlias))
     .map(cleanAPIData);
 
   // Return if there's no test command data

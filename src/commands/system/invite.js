@@ -13,6 +13,7 @@ module.exports = new ChatInputCommand({
     duration: 10
   },
   clientPerms: [ 'EmbedLinks' ],
+  aliases: [ 'inv', 'add', 'link' ],
   data: { description: 'Add the bot to your server!' },
 
   run: async (client, interaction) => {

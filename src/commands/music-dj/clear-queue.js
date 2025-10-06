@@ -4,6 +4,7 @@ const { requireSessionConditions } = require('../../modules/music');
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: [ 'clear', 'cq', 'empty' ],
   data: { description: 'Clear the entire queue' },
   run: async (client, interaction) => {
     const { emojis } = client.container;

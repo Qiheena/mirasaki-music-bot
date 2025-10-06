@@ -8,6 +8,7 @@ const TO_OPTION_ID = 'to-position';
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: [ 'move', 'mv', 'reorder' ],
   data: {
     description: 'Move a song that is current in /queue',
     options: [

@@ -4,6 +4,7 @@ const { queueEmbedResponse, requireSessionConditions } = require('../../modules/
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: [ 'q', 'list', 'songs' ],
   data: { description: 'Display the current queue' },
   run: async (client, interaction) => {
     const { emojis } = client.container;
