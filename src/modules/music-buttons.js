@@ -11,7 +11,7 @@ function createMusicControlButtons(guildId, isPlaying = false, isPaused = false,
       .setCustomId(isPaused ? 'resume' : 'pause')
       .setLabel(isPaused ? '▶️' : '⏸')
       .setStyle(isPlaying ? ButtonStyle.Success : ButtonStyle.Secondary)
-      .setDisabled(!isPlaying),
+      .setDisabled(!isPlaying && !isPaused),
     new ButtonBuilder()
       .setCustomId('next')
       .setLabel('⏭')

@@ -29,7 +29,7 @@ module.exports = new ComponentCommand({
         if (queue.currentMessage) {
           const buttons = createMusicControlButtons(
             guild.id,
-            !!player.track,
+            !player.paused && !!player.track,
             player.paused,
             queue.history.length > 0,
             queue.autoplay,
