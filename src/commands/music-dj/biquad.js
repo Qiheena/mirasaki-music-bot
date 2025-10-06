@@ -46,6 +46,12 @@ module.exports = new ChatInputCommand({
     // Check conditions
     if (!requireSessionConditions(interaction, true)) return;
 
+    // Lavalink uses a different filter system
+    if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+      interaction.reply(`${ emojis.error } ${ member }, biquad filters are currently only available when using discord-player. Lavalink uses a different filter system that will be implemented in a future update.`);
+      return;
+    }
+
     // Check is playing
     const queue = useQueue(guild.id);
     if (!queue.isPlaying()) {

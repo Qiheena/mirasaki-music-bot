@@ -51,10 +51,17 @@ module.exports = new ChatInputCommand({
     } = interaction;
     const { emojis } = client.container;
     const action = options.getSubcommand();
-    const queue = useQueue(guild.id);
 
     // Check conditions
     if (!requireSessionConditions(interaction, true)) return;
+
+    // Lavalink uses a different filter system
+    if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+      interaction.reply(`${ emojis.error } ${ member }, audio filters are currently only available when using discord-player. Lavalink uses a different filter system that will be implemented in a future update.`);
+      return;
+    }
+
+    const queue = useQueue(guild.id);
 
     // Check is active
     if (!queue || !queue.isPlaying()) {
