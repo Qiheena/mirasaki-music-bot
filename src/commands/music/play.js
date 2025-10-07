@@ -237,13 +237,14 @@ module.exports = new ChatInputCommand({
               embed.setURL(track.info.uri);
             }
 
+            const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
             const desc = [
               `**🎤 Artist:** ${track.info.author || 'Unknown'}`,
               `**⏱️ Duration:** ${isLive ? '🔴 LIVE' : msToTime(track.info.length)}`,
               `**📡 Source:** ${source.toUpperCase()}`,
               `**👤 Requested by:** <@${track.requester.id}>`,
               '',
-              ' || ❤️ made by @rasavedic ❤️'
+              `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
             ].join('\n');
 
             embed.setDescription(desc.length <= 4096 ? desc : desc.slice(0, 4096));
