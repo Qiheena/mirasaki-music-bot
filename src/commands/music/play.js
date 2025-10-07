@@ -103,9 +103,9 @@ module.exports = new ChatInputCommand({
         const contentIsAllowed = isAllowedContentType(ALLOWED_CONTENT_TYPE, attachment?.contentType ?? 'unknown');
         if (!contentIsAllowed.strict) {
           const { createErrorEmbed } = require('../../modules/embed-utils');
-          const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, file rejected. Content type is not **`${ALLOWED_CONTENT_TYPE}`**, received **`${attachment.contentType ?? 'unknown'}`** instead.`);
-          await searchMessage.edit({ embeds: [errorEmbed] });
-          setTimeout(() => searchMessage.delete().catch(() => {}), 10000);
+          const errorEmbed = const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, file rejected. Content type is not **`${ALLOWED_CONTENT_TYPE}`**, received **`${attachment.contentType ?? 'unknown'}`** instead.`);
+await searchMessage.edit({ embeds: [errorEmbed] });
+setTimeout(() => searchMessage.delete().catch(() => {}), 10000);
           return;
         }
       }
