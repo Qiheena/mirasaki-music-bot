@@ -67,11 +67,13 @@ const player = new Player(client, {
   skipFFmpeg: false,
   useLegacyFFmpeg: false,
   ytdlOptions: {
-    highWaterMark: 1 << 25,
+    highWaterMark: 1 << 26,
     filter: 'audioonly',
     quality: 'highestaudio',
-    liveBuffer: 40000
-  }
+    liveBuffer: 20000,
+    dlChunkSize: 1024 * 1024 * 4
+  },
+  connectionTimeout: 30000
 });
 
 if (!USE_LAVALINK) {

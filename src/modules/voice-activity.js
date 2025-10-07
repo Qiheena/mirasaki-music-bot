@@ -22,28 +22,34 @@ async function startVoiceActivityMonitor(client, guildId) {
       const settings = await getGuildSettings(guildId);
       
       if (settings.leaveOnEmpty && queue.metadata.voiceChannel) {
-        const voiceChannel = queue.metadata.voiceChannel;
-        const members = voiceChannel.members.filter(m => !m.user.bot);
-        
-        if (members.size === 0) {
-          const leaveDelay = (settings.leaveOnEmptyCooldown || 300) * 1000;
+        try {
+          const voiceChannel = queue.metadata.voiceChannel;
+          const members = voiceChannel.members.filter(m => !m.user.bot);
           
-          if (!queue.emptyChannelTimer) {
-            queue.emptyChannelTimer = Date.now();
-          }
-          
-          const elapsed = Date.now() - queue.emptyChannelTimer;
-          
-          if (elapsed >= leaveDelay) {
-            logger.info(`Leaving voice channel in guild ${guildId} - empty for ${elapsed/1000}s`);
+          if (members.size === 0) {
+            const leaveDelay = (settings.leaveOnEmptyCooldown || 300) * 1000;
             
-            queue.metadata.channel?.send('👋 Leaving voice channel because no one is listening.');
+            if (!queue.emptyChannelTimer) {
+              queue.emptyChannelTimer = Date.now();
+            }
             
-            await cleanupGuildPlayer(client, guildId);
-            stopVoiceActivityMonitor(guildId);
+            const elapsed = Date.now() - queue.emptyChannelTimer;
+            
+            if (elapsed >= leaveDelay) {
+              logger.info(`Leaving voice channel in guild ${guildId} - empty for ${elapsed/1000}s`);
+              
+              queue.metadata.channel?.send('👋 Leaving voice channel because no one is listening.');
+              
+              const { removePlayerListeners } = require('./player-events');
+              removePlayerListeners(guildId);
+              await cleanupGuildPlayer(client, guildId);
+              stopVoiceActivityMonitor(guildId);
+            }
+          } else {
+            delete queue.emptyChannelTimer;
           }
-        } else {
-          delete queue.emptyChannelTimer;
+        } catch (channelError) {
+          logger.debug(`Voice channel check error in guild ${guildId}: ${channelError.message}`);
         }
       }
       
@@ -75,7 +81,7 @@ async function startVoiceActivityMonitor(client, guildId) {
       logger.syserr(`Error in voice activity monitor for guild ${guildId}:`);
       logger.printErr(error);
     }
-  }, 30000);
+  }, 15000);
 
   voiceActivityTimers.set(guildId, interval);
   logger.debug(`Started voice activity monitor for guild ${guildId}`);

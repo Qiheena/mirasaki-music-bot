@@ -23,11 +23,11 @@ function initializeLavalink(client) {
     nodes,
     {
       resume: true,
-      resumeTimeout: 60,
+      resumeTimeout: 120,
       resumeByLibrary: true,
-      reconnectTries: 15,
-      reconnectInterval: 5000,
-      restTimeout: 30000,
+      reconnectTries: 25,
+      reconnectInterval: 2000,
+      restTimeout: 60000,
       moveOnDisconnect: true,
       userAgent: 'Discord Music Bot (Shoukaku)',
       structures: {
@@ -58,13 +58,26 @@ function initializeLavalink(client) {
     logger.warn(`Lavalink node disconnected: ${name} (${count} players affected)`);
     
     if (count > 0) {
+      const maxRetries = 3;
+      const retryDelay = 1000;
+      
       for (const [guildId, player] of client.players.entries()) {
         const queue = client.queues.get(guildId);
         if (queue && queue.current) {
-          try {
-            const availableNode = [...shoukaku.nodes.values()].find(n => n.state === 2);
-            if (availableNode) {
-              logger.info(`Attempting to restore playback for guild ${guildId}`);
+          let retries = 0;
+          let restored = false;
+          
+          while (retries < maxRetries && !restored) {
+            try {
+              const availableNode = [...shoukaku.nodes.values()].find(n => n.state === 2);
+              if (!availableNode) {
+                logger.warn(`No available Lavalink node, waiting... (attempt ${retries + 1}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay * (retries + 1)));
+                retries++;
+                continue;
+              }
+              
+              logger.info(`Attempting to restore playback for guild ${guildId} (attempt ${retries + 1}/${maxRetries})`);
               
               const newPlayer = await shoukaku.joinVoiceChannel({
                 guildId: guildId,
@@ -76,18 +89,29 @@ function initializeLavalink(client) {
               client.players.set(guildId, newPlayer);
               
               const { setupPlayerEvents } = require('./modules/player-events');
+              const { removePlayerListeners } = require('./modules/player-events');
+              removePlayerListeners(guildId);
+              
               const freshQueue = client.queues.get(guildId);
               setupPlayerEvents(client, guildId, newPlayer, freshQueue, client.container.emojis);
               
               if (freshQueue.current) {
                 await newPlayer.playTrack({ track: { encoded: freshQueue.current.track } });
                 await newPlayer.setGlobalVolume(freshQueue.volume);
-                logger.success(`Restored playback for guild ${guildId}`);
+                logger.success(`Successfully restored playback for guild ${guildId}`);
+                restored = true;
+              }
+            } catch (error) {
+              logger.syserr(`Failed to restore playback for guild ${guildId} (attempt ${retries + 1}/${maxRetries}):`);
+              logger.printErr(error);
+              retries++;
+              
+              if (retries < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, retryDelay * retries));
+              } else {
+                queue.metadata.channel?.send('⚠️ Unable to restore music playback after connection loss. Please use `/play` again.');
               }
             }
-          } catch (error) {
-            logger.syserr(`Failed to restore playback for guild ${guildId}:`);
-            logger.printErr(error);
           }
         }
       }
@@ -245,6 +269,7 @@ async function cleanupGuildPlayer(client, guildId) {
         try {
           await queue.currentMessage.delete().catch(() => {});
         } catch (e) {
+          logger.debug(`Could not delete message: ${e.message}`);
         }
       }
       

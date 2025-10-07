@@ -16,6 +16,10 @@ function initializeFirebase() {
       ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
       : undefined;
 
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
+      throw new Error('Missing required Firebase credentials');
+    }
+
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
@@ -26,8 +30,11 @@ function initializeFirebase() {
     });
 
     db = admin.firestore();
+    db.settings({
+      ignoreUndefinedProperties: true
+    });
     firebaseInitialized = true;
-    logger.success('Firebase initialized successfully');
+    logger.success('Firebase Firestore initialized successfully');
   } catch (error) {
     logger.syserr('Failed to initialize Firebase:');
     logger.printErr(error);
@@ -38,7 +45,7 @@ function initializeFirebase() {
 initializeFirebase();
 
 const guildSettingsCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 10 * 60 * 1000;
 
 async function getGuildSettings(guildId) {
   const cached = guildSettingsCache.get(guildId);
@@ -48,7 +55,7 @@ async function getGuildSettings(guildId) {
 
   try {
     const docRef = db.collection('guilds').doc(guildId);
-    const doc = await docRef.get();
+    const doc = await docRef.get({ source: 'default' });
 
     let settings;
     if (!doc.exists) {
