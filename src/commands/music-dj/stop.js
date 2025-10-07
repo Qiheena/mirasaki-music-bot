@@ -4,7 +4,7 @@ const { requireSessionConditions } = require('../../modules/music');
 
 module.exports = new ChatInputCommand({
   global: true,
-  aliases: ['disconnect', 'leave', 'dc'],
+  aliases: ['disconnect', 'leave', 'l', 'lv', 'dc'],
   data: { description: 'Stop the music player and leave the voice channel' },
   run: async (client, interaction) => {
     const { emojis } = client.container;
