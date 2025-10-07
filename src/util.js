@@ -391,10 +391,13 @@ const formatBotMessage = (content, options = {}) => {
   }
   
   if (content.embeds && Array.isArray(content.embeds)) {
-    content.embeds = content.embeds.map(embed => ({
-      ...embed,
-      color: embed.color || pinkColor
-    }));
+    content.embeds = content.embeds.map(embed => {
+      const embedData = embed.toJSON ? embed.toJSON() : (embed.data || embed);
+      return {
+        ...embedData,
+        color: embedData.color || pinkColor
+      };
+    });
     return content;
   }
   

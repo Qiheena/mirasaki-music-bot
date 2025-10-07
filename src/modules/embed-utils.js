@@ -16,7 +16,7 @@ const COLORS = {
 function createSuccessEmbed(message, title = null) {
   const embed = new EmbedBuilder()
     .setColor(COLORS.SUCCESS)
-    .setDescription(message);
+    .setDescription(message || 'No message provided');
   
   if (title) embed.setTitle(title);
   return embed;
@@ -31,7 +31,7 @@ function createSuccessEmbed(message, title = null) {
 function createErrorEmbed(message, title = null) {
   const embed = new EmbedBuilder()
     .setColor(COLORS.ERROR)
-    .setDescription(message);
+    .setDescription(message || 'An error occurred');
   
   if (title) embed.setTitle(title);
   return embed;
@@ -46,7 +46,7 @@ function createErrorEmbed(message, title = null) {
 function createInfoEmbed(message, title = null) {
   const embed = new EmbedBuilder()
     .setColor(COLORS.INFO)
-    .setDescription(message);
+    .setDescription(message || 'No information available');
   
   if (title) embed.setTitle(title);
   return embed;
@@ -61,7 +61,7 @@ function createInfoEmbed(message, title = null) {
 function createWarningEmbed(message, title = null) {
   const embed = new EmbedBuilder()
     .setColor(COLORS.WARNING)
-    .setDescription(message);
+    .setDescription(message || 'Warning');
   
   if (title) embed.setTitle(title);
   return embed;
