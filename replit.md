@@ -23,11 +23,13 @@ Preferred communication style: Simple, everyday language.
 - **Sleep command enhanced**: Added hours (h), minutes (m), and seconds (s) options
 - **All buttons optimized**: Faster response with ephemeral replies
 
-#### Enhanced Metadata & Display
+#### Enhanced Metadata & Display (October 2025)
 - **Rich track info**: Now shows Artist (🎤), Duration (⏱️), Source (📡), and Requester (👤)
 - **Live stream detection**: Shows 🔴 LIVE indicator for streaming content
 - **Source display**: Shows music source (YOUTUBE, SOUNDCLOUD, etc.)
 - **Better formatting**: All messages use proper embeds with color coding
+- **Consistent timestamps**: All now-playing messages show when the track started
+- **Fixed embed serialization**: Corrected malformed Discord embed structures
 
 #### Message Formatting System
 - **Color-coded messages**: Green (success ✅), Red (errors ❌), Pink (info)
@@ -35,15 +37,19 @@ Preferred communication style: Simple, everyday language.
 - **Error messages**: Clear, properly formatted error displays with red color
 - **Success messages**: Green embeds for all successful operations
 
-#### Search Accuracy Improvements
+#### Search Accuracy Improvements (October 2025)
 - **Smart search detection**: Auto-detects SoundCloud, Spotify, YouTube queries
 - **Better results**: Uses appropriate search prefix for accurate matches
 - **Improved queries**: Optimized search strings for better track finding
+- **Fixed query parsing bug**: Bot now searches full queries (e.g., "shape of you") instead of just first word ("shape")
+- **Multiple word support**: Properly handles song names with spaces in all command contexts
 
-#### Help Command Enhancements
-- **Navigation buttons**: Added Previous (◀️), Home (🏠), Next (▶️) buttons
-- **Better UX**: Cleaner interface with proper pagination
-- **Organized commands**: Commands grouped and easy to browse
+#### Help Command Enhancements (October 2025)
+- **Completely simplified**: Removed complex pagination and select menus for cleaner interface
+- **Categorized commands**: Music Playback, Queue Management, Audio Controls, Search & History, Settings
+- **Better explanations**: Each command has clear, simple descriptions
+- **Quick start guide**: Shows users how to get started immediately
+- **User-friendly**: Shows prefix and command shortcuts at a glance
 
 #### Queue & Playback Improvements
 - **Retry mechanism**: Tracks retry up to 3 times if playback fails
