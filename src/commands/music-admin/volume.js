@@ -10,6 +10,7 @@ const { clientConfig } = require('../../util');
 module.exports = new ChatInputCommand({
   global: true,
   permLevel: 'Administrator',
+  aliases: ['vol', 'v'],
   data: {
     description: 'Change the playback/player\'s volume',
     options: [
@@ -24,36 +25,49 @@ module.exports = new ChatInputCommand({
     ]
   },
   run: async (client, interaction) => {
-    const { emojis } = client.container;
     const { member, guild } = interaction;
     const volume = interaction.options.getInteger('volume');
     const guilds = db.getCollection('guilds');
+
+    // ✅ Custom emoji (success)
+    const successEmoji = '<:emoji_1:1309093521357013022>';
 
     // Check conditions/state
     if (!requireSessionConditions(interaction, false)) return;
 
     // Resolve settings
     const settings = getGuildSettings(guild.id);
-    if (!volume) { // Yes, that includes 0
-      interaction.reply(`${ emojis.success } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
+    if (!volume) {
+      await interaction.reply(`${ successEmoji } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
       return;
     }
 
     try {
-      // Check if current player should be updated
-      const guildPlayerNode = usePlayer(interaction.guild.id);
-      if (guildPlayerNode?.isPlaying()) guildPlayerNode.setVolume(volume);
+      // Update player volume based on mode
+      if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+        const player = client.players.get(guild.id);
+        if (player && player.track) {
+          await player.setGlobalVolume(volume);
+        }
+        const queue = client.queues.get(guild.id);
+        if (queue) queue.volume = volume;
+      } else {
+        const guildPlayerNode = usePlayer(interaction.guild.id);
+        if (guildPlayerNode?.isPlaying()) guildPlayerNode.setVolume(volume);
+      }
 
-      // Perform and notify collection that the document has changed
+      // Save volume to database
       settings.volume = volume;
       guilds.update(settings);
       saveDb();
 
-      // Feedback
-      await interaction.reply({ content: `${ emojis.success } ${ member }, volume set to \`${ volume }\`` });
+      // ✅ Success feedback
+      await interaction.reply({ 
+        content: `${ successEmoji } ${ member }, volume set to \`${ volume }\`` 
+      });
     }
     catch (e) {
-      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      await interaction.reply(`${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });
