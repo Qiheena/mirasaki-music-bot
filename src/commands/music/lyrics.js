@@ -1,4 +1,3 @@
-// lyrics.js
 const { ApplicationCommandOptionType, EmbedBuilder } = require('discord.js');
 const { ChatInputCommand } = require('../../classes/Commands');
 const { lyricsExtractor: lyricsExtractorSuper } = require('@discord-player/extractor');
@@ -9,38 +8,86 @@ const { requireSessionConditions } = require('../../modules/music');
 
 const lyricsExtractor = lyricsExtractorSuper();
 
-// Helper function to clean and optimize search query
-function optimizeLyricsQuery(query) {
+/**
+ * Cleans and optimizes the song title for lyrics searching.
+ * @param {string} query - The original song title.
+ * @param {string} [artist=''] - The song's artist.
+ * @returns {string} A cleaned search query.
+ */
+function optimizeLyricsQuery(query, artist = '') {
   if (!query) return '';
   
-  // Remove common separators and extra text
-  let cleaned = query
-    .replace(/\|\s*/g, ' ') // Remove pipe separators
-    .replace(/\s+\|\s+/g, ' ')
-    .replace(/lyrical\s*/gi, '') // Remove "lyrical" text
-    .replace(/song\s*/gi, '') // Remove "song" text
-    .replace(/official\s*/gi, '') // Remove "official" text
-    .replace(/video\s*/gi, '') // Remove "video" text
-    .replace(/audio\s*/gi, '') // Remove "audio" text
-    .replace(/hd\s*/gi, '') // Remove "HD" text
-    .replace(/4k\s*/gi, '') // Remove "4K" text
-    .replace(/\s+/g, ' ') // Multiple spaces to single space
-    .trim();
+  let cleaned = query;
+
+  // 1. Remove anything after parentheses (), brackets [], or pipes |
+  cleaned = cleaned.split(/\||\(|\[/)[0].trim();
   
-  // Extract just the main song title (usually the first part before |)
-  const mainParts = cleaned.split('|')[0]?.trim();
-  if (mainParts && mainParts.length > 0) {
-    cleaned = mainParts;
+  // 2. Remove common junk words
+  const junkWords = [
+    'official', 'music', 'video', 'audio', 'lyric', 'lyrics',
+    'hd', '4k', 'hq', 'live', 'visualizer', 'explicit',
+    'remastered', 'remix', 'version', 'edit', 'feat', 'ft', 'feat.', 'ft.'
+  ];
+  const junkRegex = new RegExp(`\\b(${junkWords.join('|')})\\b`, 'gi');
+  cleaned = cleaned.replace(junkRegex, '');
+
+  // 3. Remove any special characters that might interfere with the search
+  cleaned = cleaned.replace(/[^a-zA-Z0-9\s]/g, '');
+
+  // 4. Clean up extra spaces
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  
+  // 5. If the artist's name is not already in the query, add it to the beginning
+  if (artist && !cleaned.toLowerCase().includes(artist.toLowerCase())) {
+      cleaned = `${artist} ${cleaned}`;
   }
-  
-  // If still too long, take first few words
-  const words = cleaned.split(' ');
-  if (words.length > 5) {
-    cleaned = words.slice(0, 4).join(' ');
-  }
-  
+
   return cleaned;
 }
+
+/**
+ * Creates and sends a lyrics embed.
+ * @param {import('discord.js').CommandInteraction} interaction - The interaction object.
+ * @param {object} result - The result from the lyrics extractor.
+ * @param {string} [footerText=null] - Text to add to the embed's footer.
+ */
+async function sendLyricsEmbed(interaction, result, footerText = null) {
+    const { title, fullTitle, thumbnail, image, url, artist, lyrics } = result;
+
+    // If no lyrics are found, send a message
+    if (!lyrics) {
+        await interaction.editReply({
+            content: `I found the song **\`${title}\`**, but it doesn't have any lyrics (it might be an instrumental).`
+        });
+        return;
+    }
+
+    // If the lyrics are too long, truncate them
+    let description = lyrics;
+    if (description.length > EMBED_DESCRIPTION_MAX_LENGTH) {
+        description = description.slice(0, EMBED_DESCRIPTION_MAX_LENGTH - 4) + '...';
+    }
+
+    const lyricsEmbed = new EmbedBuilder()
+        .setColor(colorResolver())
+        .setTitle(title ?? 'Unknown Title')
+        .setURL(url)
+        .setAuthor({
+            name: artist?.name ?? 'Unknown Artist',
+            url: artist?.url ?? null,
+            iconURL: artist?.image ?? null
+        })
+        .setDescription(description)
+        .setThumbnail(thumbnail ?? image ?? null);
+        
+    if (fullTitle) lyricsEmbed.setFooter({ text: fullTitle });
+
+    await interaction.editReply({ 
+      content: footerText,
+      embeds: [lyricsEmbed] 
+    });
+}
+
 
 module.exports = new ChatInputCommand({
   global: true,
@@ -57,145 +104,99 @@ module.exports = new ChatInputCommand({
         name: 'query-lyrics',
         type: ApplicationCommandOptionType.String,
         autocomplete: true,
-        description: 'The music to search/query',
+        description: 'The song you want to search for',
         required: false
       },
       {
         name: 'query-lyrics-no-auto-complete',
         type: ApplicationCommandOptionType.String,
-        description: 'The music to search/query - doesn\'t utilize auto-complete, meaning your query won\'t be modified',
+        description: 'Search for a song without auto-complete',
         required: false
       }
     ]
   },
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   run: async (client, interaction) => {
     const { emojis } = client.container;
     const { member, guild } = interaction;
 
-    // Get current track from either Lavalink or discord-player
-    let currentTrackTitle;
-    if (process.env.USE_LAVALINK === 'true') {
-      const queue = client.queues?.get(guild.id);
-      currentTrackTitle = queue?.current?.info?.title;
-    } else {
-      currentTrackTitle = useQueue(guild.id)?.currentTrack?.title;
-    }
-
     let query = interaction.options.getString('query-lyrics') 
-      ?? interaction.options.getString('query-lyrics-no-auto-complete') 
-      ?? currentTrackTitle;
+      ?? interaction.options.getString('query-lyrics-no-auto-complete');
+    let artist = '';
+    let trackTitle = '';
+    const originalQuery = query;
+
+    // If the user didn't provide a song, use the currently playing one
+    if (!query) {
+      if (process.env.USE_LAVALINK === 'true') {
+        const queue = client.queues?.get(guild.id);
+        if (queue?.current) {
+          trackTitle = queue.current.info.title;
+          artist = queue.current.info.author;
+          query = `${artist} ${trackTitle}`;
+        }
+      } else {
+        const queue = useQueue(guild.id);
+        if (queue?.currentTrack) {
+          trackTitle = queue.currentTrack.title;
+          artist = queue.currentTrack.author;
+          query = `${artist} ${trackTitle}`;
+        }
+      }
+    }
     
+    // If still no song is found, send an error
     if (!query) {
       interaction.reply({
-        content: `${emojis.error} ${member}, please provide a query, currently playing song can only be used when playback is active - this command has been cancelled`
+        content: `${emojis.error} ${member}, please provide a song name, or play a song first.`,
+        ephemeral: true
       });
       return;
     }
 
-    // Check state
+    // Check session conditions
     if (!requireSessionConditions(interaction, false, false, false)) return;
 
-    // Let's defer the interaction as things can take time to process
     await interaction.deferReply();
-
-    const originalQuery = query;
-    query = optimizeLyricsQuery(query.toLowerCase());
+    
+    // Optimize the song title for searching
+    const optimizedQuery = optimizeLyricsQuery(trackTitle || query, artist);
 
     try {
-      const res = await lyricsExtractor
-        .search(query)
-        .catch(() => null);
+      let res = await lyricsExtractor.search(optimizedQuery).catch(() => null);
 
-      // If first search fails, try with more simplified query
-      if (!res) {
-        console.log(`First search failed for "${query}", trying simplified version...`);
+      // If lyrics are not found on the first try
+      if (!res || !res.lyrics) {
+        console.log(`First search failed for "${optimizedQuery}", trying a second time...`);
         
-        // Further simplify the query
-        const simplifiedQuery = query.split(' ').slice(0, 3).join(' ');
-        const res2 = await lyricsExtractor
-          .search(simplifiedQuery)
-          .catch(() => null);
-          
-        if (res2) {
-          // Use the successful result
-          const {
-            title,
-            fullTitle,
-            thumbnail,
-            image,
-            url,
-            artist,
-            lyrics
-          } = res2;
-
-          let description = lyrics;
-          if (description && description.length > EMBED_DESCRIPTION_MAX_LENGTH) {
-            description = description.slice(0, EMBED_DESCRIPTION_MAX_LENGTH - 3) + '...';
-          }
-
-          const lyricsEmbed = new EmbedBuilder()
-            .setColor(colorResolver())
-            .setTitle(title ?? 'Unknown')
-            .setAuthor({
-              name: artist?.name ?? 'Unknown',
-              url: artist?.url ?? null,
-              iconURL: artist?.image ?? null
-            })
-            .setDescription(description ?? 'Instrumental')
-            .setURL(url);
-
-          if (image || thumbnail) lyricsEmbed.setImage(image ?? thumbnail);
-          if (fullTitle) lyricsEmbed.setFooter({ text: fullTitle });
-
-          await interaction.editReply({ 
-            embeds: [lyricsEmbed],
-            content: `${emojis.success} ${member}, found lyrics for simplified query: **\`${simplifiedQuery}\`**`
+        // Try again, this time with less optimization
+        const fallbackQuery = trackTitle ? `${artist} ${trackTitle.split(/\||\(|\[/)[0].trim()}`.trim() : originalQuery;
+        res = await lyricsExtractor.search(fallbackQuery).catch(() => null);
+        
+        // If the second attempt also fails
+        if (!res || !res.lyrics) {
+          interaction.editReply({
+            content: `${emojis.error} ${member}, couldn't find lyrics for **\`${originalQuery || trackTitle}\`**.\n\nTried searching for: \`${optimizedQuery}\``
           });
           return;
         }
         
-        interaction.editReply({
-          content: `${emojis.error} ${member}, could not find lyrics for **\`${originalQuery}\`**\n\nTried searching for: **\`${query}\`** and **\`${simplifiedQuery}\`**\nPlease try a more specific song title.`
-        });
+        // Success on the second try
+        await sendLyricsEmbed(
+          interaction,
+          res,
+          `${emojis.success} ${member}, I found lyrics with an alternative search.`
+        );
         return;
       }
 
-      const {
-        title,
-        fullTitle,
-        thumbnail,
-        image,
-        url,
-        artist,
-        lyrics
-      } = res;
-
-      let description = lyrics;
-      if (description && description.length > EMBED_DESCRIPTION_MAX_LENGTH) {
-        description = description.slice(0, EMBED_DESCRIPTION_MAX_LENGTH - 3) + '...';
-      }
-
-      const lyricsEmbed = new EmbedBuilder()
-        .setColor(colorResolver())
-        .setTitle(title ?? 'Unknown')
-        .setAuthor({
-          name: artist?.name ?? 'Unknown',
-          url: artist?.url ?? null,
-          iconURL: artist?.image ?? null
-        })
-        .setDescription(description ?? 'Instrumental')
-        .setURL(url);
-
-      if (image || thumbnail) lyricsEmbed.setImage(image ?? thumbnail);
-      if (fullTitle) lyricsEmbed.setFooter({ text: fullTitle });
-
-      // Feedback
-      await interaction.editReply({ embeds: [lyricsEmbed] });
+      // Success on the first try
+      await sendLyricsEmbed(interaction, res);
+      
     } catch (e) {
+      console.error(e);
       interaction.editReply({
-        content: `${emojis.error} ${member}, something went wrong:\n\n${e.message}`
+        content: `${emojis.error} ${member}, something went wrong while searching for lyrics:\n\n${e.message}`
       });
     }
   }
