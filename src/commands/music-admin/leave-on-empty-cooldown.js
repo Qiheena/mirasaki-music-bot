@@ -40,7 +40,7 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, false)) return;
 
     // Resolve settings
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     if (!seconds) {
       interaction.reply(`${ emojis.success } ${ member }, the amount of seconds to wait before leaving when channel is empty is currently set to **\`${ settings.leaveOnEmptyCooldown ?? clientConfig.defaultLeaveOnEmptyCooldown }\`**`);
       return;
@@ -50,8 +50,8 @@ module.exports = new ChatInputCommand({
       // Perform and notify collection that the document has changed
       settings.leaveOnEmpty = status;
       settings.leaveOnEmptyCooldown = seconds;
-      guilds.update(settings);
-      saveDb();
+      await guilds.update(settings);
+      await saveDb();
 
       // Feedback
       if (status !== true) interaction.reply({ content: `${ emojis.success } ${ member }, leave-on-empty has been disabled` });

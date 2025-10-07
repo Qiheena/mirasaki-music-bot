@@ -26,11 +26,11 @@ module.exports = new ChatInputCommand({
 
     try {
       const guilds = db.getCollection('guilds');
-      const settings = getGuildSettings(guild.id);
+      const settings = await getGuildSettings(guild.id);
       
       settings.autoDeleteDuration = duration;
-      guilds.update(settings);
-      saveDb();
+      await guilds.update(settings);
+      await saveDb();
 
       if (duration === 0) {
         await interaction.reply(`${emojis.success} ${member}, auto-delete for bot messages has been **disabled**`);

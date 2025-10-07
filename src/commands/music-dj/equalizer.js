@@ -77,10 +77,10 @@ module.exports = new ChatInputCommand({
       if (shouldSave) {
         // Perform and notify collection that the document has changed
         const guilds = db.getCollection('guilds');
-        const settings = getGuildSettings(guild.id);
+        const settings = await getGuildSettings(guild.id);
         settings.equalizer = equalizer;
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
       }
 
       // Feedback

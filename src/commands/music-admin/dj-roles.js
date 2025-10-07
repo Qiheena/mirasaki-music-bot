@@ -65,7 +65,7 @@ module.exports = new ChatInputCommand({
     } = interaction;
     const { emojis } = client.container;
     const action = options.getSubcommand();
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     const { djRoleIds = [] } = settings;
     // Note: Don't define in outer scope, will be uninitialized
     const guilds = db.getCollection('guilds');
@@ -82,8 +82,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.djRoleIds = [ ...djRoleIds, role.id ];
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member },  ${ role } has been added to the list of DJ roles`);
@@ -100,8 +100,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.djRoleIds = djRoleIds.filter((e) => e !== role.id);
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member },  ${ role } has been removed from the list of DJ roles`);
@@ -118,8 +118,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.djRoleIds = [];
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member }, your list of DJ roles has been reset - DJ commands are now reserved for the Administrator permission level and up`);

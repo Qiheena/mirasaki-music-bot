@@ -38,7 +38,7 @@ module.exports = new ChatInputCommand({
     } = interaction;
     const { emojis } = client.container;
     const action = options.getSubcommand();
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     const guilds = db.getCollection('guilds');
 
     switch (action) {
@@ -56,8 +56,8 @@ module.exports = new ChatInputCommand({
         }
 
         settings.prefix = newPrefix;
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         interaction.reply(`${ emojis.success } ${ member }, prefix has been updated to \`${ newPrefix }\``);
         break;

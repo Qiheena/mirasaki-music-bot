@@ -33,7 +33,7 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, false)) return;
 
     // Resolve settings
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     if (!seconds) {
       interaction.reply(`${ emojis.success } ${ member }, the amount of seconds to wait before leaving channel when playback finishes is currently set to **\`${ settings.leaveOnEndCooldown ?? clientConfig.defaultLeaveOnEndCooldown }\`**`);
       return;
@@ -42,8 +42,8 @@ module.exports = new ChatInputCommand({
     try {
       // Perform and notify collection that the document has changed
       settings.leaveOnEndCooldown = seconds;
-      guilds.update(settings);
-      saveDb();
+      await guilds.update(settings);
+      await saveDb();
 
       // Feedback
       await interaction.reply({ content: `${ emojis.success } ${ member }, leave-on-end cooldown set to \`${ msToHumanReadableTime(seconds * MS_IN_ONE_SECOND) }\`\nThis change will take effect the next time playback is initialized` });

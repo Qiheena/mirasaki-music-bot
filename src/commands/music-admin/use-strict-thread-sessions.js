@@ -29,7 +29,7 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, false)) return;
 
     // Resolve settings
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     if (typeof newSetting === 'undefined' || newSetting === null) {
       // eslint-disable-next-line sonarjs/no-nested-template-literals
       interaction.reply(`${ emojis.success } ${ member }, \`Use Strict Thread Sessions\` is currently **${ settings.threadSessionStrictCommandChannel ? `${ emojis.success } Enabled` : `${ emojis.error } Disabled` }**`);
@@ -39,8 +39,8 @@ module.exports = new ChatInputCommand({
     try {
       // Perform and notify collection that the document has changed
       settings.threadSessionStrictCommandChannel = newSetting;
-      guilds.update(settings);
-      saveDb();
+      await guilds.update(settings);
+      await saveDb();
 
       // Feedback
       // eslint-disable-next-line sonarjs/no-nested-template-literals

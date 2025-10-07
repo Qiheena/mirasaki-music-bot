@@ -34,7 +34,7 @@ module.exports = new ChatInputCommand({
     if (!requireSessionConditions(interaction, false)) return;
 
     // Resolve settings
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     if (!volume) {
       interaction.reply(`${ emojis.success } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
       return;
@@ -56,8 +56,8 @@ module.exports = new ChatInputCommand({
 
       // Perform and notify collection that the document has changed
       settings.volume = volume;
-      guilds.update(settings);
-      saveDb();
+      await guilds.update(settings);
+      await saveDb();
 
       // Feedback
       await interaction.reply({ content: `${ emojis.success } ${ member }, volume set to \`${ volume }\`` });

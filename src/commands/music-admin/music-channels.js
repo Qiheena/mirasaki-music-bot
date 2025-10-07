@@ -68,7 +68,7 @@ module.exports = new ChatInputCommand({
     } = interaction;
     const { emojis } = client.container;
     const action = options.getSubcommand();
-    const settings = getGuildSettings(guild.id);
+    const settings = await getGuildSettings(guild.id);
     const { musicChannelIds = [] } = settings;
     // Note: Don't define in outer scope, will be uninitialized
     const guilds = db.getCollection('guilds');
@@ -85,8 +85,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.musicChannelIds = [ ...musicChannelIds, channel.id ];
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member },  ${ channel } has been added to the list of music channels`);
@@ -103,8 +103,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.musicChannelIds = musicChannelIds.filter((e) => e !== channel.id);
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member },  ${ channel } has been removed from the list of music channels`);
@@ -121,8 +121,8 @@ module.exports = new ChatInputCommand({
 
         // Perform and notify collection that the document has changed
         settings.musicChannelIds = [];
-        guilds.update(settings);
-        saveDb();
+        await guilds.update(settings);
+        await saveDb();
 
         // Feedback
         interaction.reply(`${ emojis.success } ${ member }, your list of music channels has been reset`);

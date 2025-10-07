@@ -127,7 +127,7 @@ module.exports = new ChatInputCommand({
         let queue = client.queues.get(guild.id);
         if (!queue) {
           const { createQueue } = require('../../lavalink-setup');
-          const settings = getGuildSettings(guild.id);
+          const settings = await getGuildSettings(guild.id);
           
           let eventChannel = interaction.channel;
           if (settings.useThreadSessions) {
@@ -343,7 +343,7 @@ module.exports = new ChatInputCommand({
           return;
         }
 
-        const settings = getGuildSettings(guild.id);
+        const settings = await getGuildSettings(guild.id);
         let eventChannel = interaction.channel;
         if (settings.useThreadSessions) {
           eventChannel = await musicEventChannel(client, interaction);
