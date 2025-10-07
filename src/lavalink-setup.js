@@ -23,12 +23,12 @@ function initializeLavalink(client) {
     nodes,
     {
       resume: true,
-      resumeTimeout: 30,
+      resumeTimeout: 60,
       resumeByLibrary: true,
-      reconnectTries: 10,
-      reconnectInterval: 3000,
-      restTimeout: 15000,
-      moveOnDisconnect: false,
+      reconnectTries: 15,
+      reconnectInterval: 5000,
+      restTimeout: 30000,
+      moveOnDisconnect: true,
       userAgent: 'Discord Music Bot (Shoukaku)',
       structures: {
         rest: undefined,
@@ -37,7 +37,6 @@ function initializeLavalink(client) {
     }
   );
 
-  // Node event listeners
   shoukaku.on('ready', (name) => {
     logger.success(`Lavalink node ready: ${name}`);
   });
@@ -55,8 +54,39 @@ function initializeLavalink(client) {
     logger.info(`Lavalink node reconnecting: ${name} (attempt ${tries})`);
   });
 
-  shoukaku.on('disconnect', (name, count) => {
+  shoukaku.on('disconnect', async (name, count) => {
     logger.warn(`Lavalink node disconnected: ${name} (${count} players affected)`);
+    
+    if (count > 0) {
+      client.players.forEach(async (player, guildId) => {
+        const queue = client.queues.get(guildId);
+        if (queue && queue.current) {
+          try {
+            const availableNode = [...shoukaku.nodes.values()].find(n => n.state === 2);
+            if (availableNode) {
+              logger.info(`Attempting to restore playback for guild ${guildId}`);
+              const newPlayer = await shoukaku.joinVoiceChannel({
+                guildId: guildId,
+                channelId: queue.metadata.voiceChannel.id,
+                shardId: player.guildId ?? 0,
+                deaf: true
+              });
+              
+              client.players.set(guildId, newPlayer);
+              
+              if (queue.current) {
+                await newPlayer.playTrack({ track: { encoded: queue.current.track } });
+                await newPlayer.setGlobalVolume(queue.volume);
+                logger.success(`Restored playback for guild ${guildId}`);
+              }
+            }
+          } catch (error) {
+            logger.syserr(`Failed to restore playback for guild ${guildId}:`);
+            logger.printErr(error);
+          }
+        }
+      });
+    }
   });
 
   shoukaku.on('debug', (name, info) => {
@@ -65,9 +95,9 @@ function initializeLavalink(client) {
     }
   });
 
-  // Store queues and players in Maps for each guild
   client.queues = new Map();
   client.players = new Map();
+  client.playerTimeouts = new Map();
 
   return shoukaku;
 }
@@ -85,12 +115,15 @@ function createQueue(guildId, metadata) {
     current: null,
     history: [],
     volume: 50,
-    loop: 'off', // 'off', 'track', 'queue'
+    loop: 'off',
     autoplay: false,
     metadata,
+    isPaused: false,
+    lastActivity: Date.now(),
     
     add(track) {
       this.tracks.push(track);
+      this.lastActivity = Date.now();
     },
     
     addToHistory(track) {
@@ -107,7 +140,10 @@ function createQueue(guildId, metadata) {
     },
     
     next() {
-      if (this.loop === 'track') return this.current;
+      if (this.loop === 'track') {
+        this.lastActivity = Date.now();
+        return this.current;
+      }
       
       if (this.current && this.loop !== 'track') {
         this.addToHistory(this.current);
@@ -118,6 +154,7 @@ function createQueue(guildId, metadata) {
       }
       
       this.current = this.tracks.shift() || null;
+      this.lastActivity = Date.now();
       return this.current;
     },
     
@@ -128,6 +165,7 @@ function createQueue(guildId, metadata) {
           this.tracks.unshift(this.current);
         }
         this.current = prevTrack;
+        this.lastActivity = Date.now();
         return prevTrack;
       }
       return null;
@@ -135,6 +173,7 @@ function createQueue(guildId, metadata) {
     
     clear() {
       this.tracks = [];
+      this.lastActivity = Date.now();
     },
     
     shuffle() {
@@ -142,10 +181,12 @@ function createQueue(guildId, metadata) {
         const j = Math.floor(Math.random() * (i + 1));
         [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
       }
+      this.lastActivity = Date.now();
     },
     
     remove(index) {
       if (index >= 0 && index < this.tracks.length) {
+        this.lastActivity = Date.now();
         return this.tracks.splice(index, 1)[0];
       }
       return null;
@@ -155,6 +196,7 @@ function createQueue(guildId, metadata) {
       if (from >= 0 && from < this.tracks.length && to >= 0 && to < this.tracks.length) {
         const track = this.tracks.splice(from, 1)[0];
         this.tracks.splice(to, 0, track);
+        this.lastActivity = Date.now();
         return true;
       }
       return false;
@@ -163,11 +205,52 @@ function createQueue(guildId, metadata) {
     swap(index1, index2) {
       if (index1 >= 0 && index1 < this.tracks.length && index2 >= 0 && index2 < this.tracks.length) {
         [this.tracks[index1], this.tracks[index2]] = [this.tracks[index2], this.tracks[index1]];
+        this.lastActivity = Date.now();
         return true;
       }
       return false;
     }
   };
+}
+
+/**
+ * Cleanup player and queue for a guild
+ * @param {Client} client - Discord client
+ * @param {string} guildId - Guild ID
+ */
+async function cleanupGuildPlayer(client, guildId) {
+  try {
+    const player = client.players.get(guildId);
+    if (player) {
+      try {
+        await player.connection.disconnect();
+      } catch (e) {
+        logger.debug(`Error disconnecting player for guild ${guildId}: ${e.message}`);
+      }
+      client.players.delete(guildId);
+    }
+    
+    const queue = client.queues.get(guildId);
+    if (queue && queue.currentMessage) {
+      try {
+        await queue.currentMessage.delete().catch(() => {});
+      } catch (e) {
+      }
+    }
+    
+    client.queues.delete(guildId);
+    
+    const timeout = client.playerTimeouts?.get(guildId);
+    if (timeout) {
+      clearTimeout(timeout);
+      client.playerTimeouts.delete(guildId);
+    }
+    
+    logger.debug(`Cleaned up player and queue for guild ${guildId}`);
+  } catch (error) {
+    logger.syserr(`Error cleaning up guild ${guildId}:`);
+    logger.printErr(error);
+  }
 }
 
 /**
@@ -187,4 +270,4 @@ function msToTime(ms) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-module.exports = { initializeLavalink, createQueue, msToTime };
+module.exports = { initializeLavalink, createQueue, cleanupGuildPlayer, msToTime };
