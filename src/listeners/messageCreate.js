@@ -96,8 +96,12 @@ module.exports = async (client, message) => {
     
     if (type === 'string') {
       if (option.type === 3) {
-        const hasMoreOptions = index < effectiveOptions.length - 1;
-        if (!hasMoreOptions) {
+        // For string options, check if there are more non-optional string options after this
+        const remainingOptions = effectiveOptions.slice(index + 1);
+        const hasRequiredStringAfter = remainingOptions.some(opt => opt.type === 3 && opt.required);
+        
+        if (!hasRequiredStringAfter) {
+          // If no required strings after, join all remaining args
           return effectiveArgs.slice(index).join(' ') || null;
         }
         return effectiveArgs[index] || null;
