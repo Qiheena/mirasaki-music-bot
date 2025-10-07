@@ -103,7 +103,7 @@ module.exports = new ChatInputCommand({
         const contentIsAllowed = isAllowedContentType(ALLOWED_CONTENT_TYPE, attachment?.contentType ?? 'unknown');
         if (!contentIsAllowed.strict) {
   const { createErrorEmbed } = require('../../modules/embed-utils');
-  const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, file rejected. Content type is not **`${ALLOWED_CONTENT_TYPE}`**, received **`${attachment.contentType ?? 'unknown'}`** instead.`);
+  const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, file rejected. Content type is not **\`${ALLOWED_CONTENT_TYPE}\`**, received **\`${attachment.contentType ?? 'unknown'}\`** instead.`);
   await searchMessage.edit({ embeds: [errorEmbed] });
   setTimeout(() => searchMessage.delete().catch(() => {}), 10000);
           return;
@@ -134,7 +134,7 @@ module.exports = new ChatInputCommand({
 
         if (!result || (result.loadType === 'empty' || result.loadType === 'error')) {
           const { createErrorEmbed } = require('../../modules/embed-utils');
-          const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, no tracks found for query `${query}` - this command has been cancelled`);
+          const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, no tracks found for query \`${query}\` - this command has been cancelled`);
           interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
@@ -200,7 +200,7 @@ module.exports = new ChatInputCommand({
 
         if (tracks.length === 0) {
           const { createErrorEmbed } = require('../../modules/embed-utils');
-          const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, no tracks found for query `${query}``);
+          const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, no tracks found for query \`${query}\``);
           interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
@@ -244,8 +244,7 @@ module.exports = new ChatInputCommand({
               `**👤 Requested by:** <@${track.requester.id}>`,
               '',
               ' || ❤️ made by @rasavedic ❤️'
-            ].join('
-');
+            ].join('\n');
 
             embed.setDescription(desc.length <= 4096 ? desc : desc.slice(0, 4096));
 
@@ -275,8 +274,8 @@ module.exports = new ChatInputCommand({
             const trackTitle = track.info.title || 'No Title';
 
             const feedbackEmbed = tracks.length > 1
-              ? createSuccessEmbed(`${emojis.success} ${member}, enqueued **${tracks.length}** tracks! First: **`${trackTitle}`**`)
-              : createSuccessEmbed(`${emojis.success} ${member}, enqueued **`${trackTitle}`**!`);
+              ? createSuccessEmbed(`${emojis.success} ${member}, enqueued **${tracks.length}** tracks! First: **\`${trackTitle}\`**`)
+              : createSuccessEmbed(`${emojis.success} ${member}, enqueued **\`${trackTitle}\`**!`);
 
             await interaction.editReply({ embeds: [feedbackEmbed] });
           }
@@ -290,9 +289,7 @@ module.exports = new ChatInputCommand({
       const { createErrorEmbed } = require('../../modules/embed-utils');
       const errorMessage = e.message || 'Unknown error occurred';
       const maxLength = 1900;
-      const truncatedMessage = errorMessage.length > maxLength ? errorMessage.substring(0, maxLength) + '...
-
-(Error message truncated)' : errorMessage;
+      const truncatedMessage = errorMessage.length > maxLength ? errorMessage.substring(0, maxLength) + '...\n\n(Error message truncated)' : errorMessage;
 
       const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, something went wrong:
 

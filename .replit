@@ -27,7 +27,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node src/index.js"
+args = "node ."
 
 [[ports]]
 localPort = 3000
