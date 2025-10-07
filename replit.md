@@ -8,22 +8,53 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
-### Prefix Command Emoji Fix
-- **Fixed automatic emoji addition**: Removed the automatic 😊 emoji that was being added to all prefix command responses via `formatBotMessage` function
-- **Clean message formatting**: Only emojis in the actual message content (like error ❌, success ✅) now appear
-- **Consistent pink branding**: Updated to use brand pink color (0xFF69B4) consistently
+### Major Bot Improvements & Bug Fixes
 
-### Play Command Enhancement
-- **Beautiful metadata display**: Play command already features complete metadata with:
-  - Song title (linked to source URL)
-  - Author/Artist name
-  - Duration in readable format
-  - Requester mention
-  - High-quality thumbnail
-  - Indian time zone (GMT+5:30) display
-  - "❤️ made by @rasavedic ❤️" footer
-- **Pink color theme**: All embeds use consistent pink color (0xFF69B4)
-- **Interactive buttons**: Volume controls, playback controls, queue management, and autoplay toggle
+#### Connection & Performance Enhancements
+- **Faster reconnection**: Reduced retry interval from 5s to 2s for quicker recovery
+- **More reliable**: Increased retry attempts from 15 to 25 with smart backoff
+- **Auto-recovery**: Bot automatically restores playback after Lavalink disconnects
+- **Optimized caching**: Extended cache time to 10 minutes for better performance
+- **Improved timeouts**: Extended connection and REST timeouts for stability
+
+#### Button & Command Fixes
+- **Loop button fixed**: Added proper deferReply to prevent interaction errors
+- **Queue button fixed**: Now responds correctly with enhanced metadata display
+- **Sleep command enhanced**: Added hours (h), minutes (m), and seconds (s) options
+- **All buttons optimized**: Faster response with ephemeral replies
+
+#### Enhanced Metadata & Display
+- **Rich track info**: Now shows Artist (🎤), Duration (⏱️), Source (📡), and Requester (👤)
+- **Live stream detection**: Shows 🔴 LIVE indicator for streaming content
+- **Source display**: Shows music source (YOUTUBE, SOUNDCLOUD, etc.)
+- **Better formatting**: All messages use proper embeds with color coding
+
+#### Message Formatting System
+- **Color-coded messages**: Green (success ✅), Red (errors ❌), Pink (info)
+- **Embed utility module**: Consistent, beautiful message formatting throughout
+- **Error messages**: Clear, properly formatted error displays with red color
+- **Success messages**: Green embeds for all successful operations
+
+#### Search Accuracy Improvements
+- **Smart search detection**: Auto-detects SoundCloud, Spotify, YouTube queries
+- **Better results**: Uses appropriate search prefix for accurate matches
+- **Improved queries**: Optimized search strings for better track finding
+
+#### Help Command Enhancements
+- **Navigation buttons**: Added Previous (◀️), Home (🏠), Next (▶️) buttons
+- **Better UX**: Cleaner interface with proper pagination
+- **Organized commands**: Commands grouped and easy to browse
+
+#### Queue & Playback Improvements
+- **Retry mechanism**: Tracks retry up to 3 times if playback fails
+- **Auto-skip on failure**: Automatically skips to next track after max retries
+- **Better stuck handling**: Improved recovery when player gets stuck
+- **Enhanced cleanup**: Proper cleanup of listeners and resources on disconnect
+
+#### Voice Activity Monitoring
+- **Faster checks**: Reduced monitoring interval from 30s to 15s
+- **Better error handling**: Catches and logs voice channel errors properly
+- **Clean disconnection**: Removes all listeners before cleanup
 
 ## System Architecture
 

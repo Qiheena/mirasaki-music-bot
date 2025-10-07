@@ -1,4 +1,5 @@
 const { ChatInputCommand } = require('../../classes/Commands');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const {
   getCommandSelectMenu,
   generateCommandOverviewEmbed,
@@ -6,11 +7,12 @@ const {
 } = require('../../handlers/commands');
 const { commandAutoCompleteOption } = require('../../interactions/autocomplete/command');
 
+const helpPages = new Map();
+
 module.exports = new ChatInputCommand({
   global: true,
   aliases: ['h', 'commands', 'cmd'],
   cooldown: {
-    // Use user cooldown type instead of default member
     type: 'user',
     usages: 2,
     duration: 10
@@ -21,50 +23,72 @@ module.exports = new ChatInputCommand({
     options: [ commandAutoCompleteOption ]
   },
 
-  run: (client, interaction) => {
-    // Destructuring
+  run: async (client, interaction) => {
     const { member } = interaction;
     const {
       commands, contextMenus, emojis
     } = client.container;
 
-    // Check for optional autocomplete focus
     const commandName = interaction.options.getString('command');
     const hasCommandArg = commandName !== null && typeof commandName !== 'undefined';
 
-    // Show command overview if no command parameter is supplied
     if (!hasCommandArg) {
-      // Getting our command select menu, re-used
       const cmdSelectMenu = getCommandSelectMenu(member);
+      const embed = generateCommandOverviewEmbed(commands, interaction);
+      
+      // Create navigation buttons
+      const navButtons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('help_previous')
+            .setLabel('◀️ Previous')
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId('help_home')
+            .setLabel('🏠 Home')
+            .setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder()
+            .setCustomId('help_next')
+            .setLabel('Next ▶️')
+            .setStyle(ButtonStyle.Primary)
+        );
 
-      // Reply to the interaction with our embed
-      interaction.reply({
-        embeds: [ generateCommandOverviewEmbed(commands, interaction) ],
-        components: [ cmdSelectMenu ]
+      const response = await interaction.reply({
+        embeds: [ embed ],
+        components: [ cmdSelectMenu, navButtons ],
+        fetchReply: true
       });
+
+      // Store page info for navigation
+      helpPages.set(response.id, {
+        page: 0,
+        totalPages: Math.ceil(commands.size / 10),
+        userId: member.id
+      });
+
+      // Clean up old entries (older than 5 minutes)
+      setTimeout(() => {
+        helpPages.delete(response.id);
+      }, 5 * 60 * 1000);
+
       return;
     }
 
-    // Request HAS optional command argument
-    // Assigning our data
-    const clientCmd = commands.get(commandName)
-      || contextMenus.get(commandName);
+    const clientCmd = commands.get(commandName) || contextMenus.get(commandName);
 
-    // Checking if the commandName is a valid client command
     if (!clientCmd) {
+      const { createErrorEmbed } = require('../../modules/embed-utils');
+      const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, I couldn't find the command **\`/${commandName}\`**`);
       interaction.reply({
-        content: `${ emojis.error } ${ member }, I couldn't find the command **\`/${ commandName }\`**`,
+        embeds: [errorEmbed],
         ephemeral: true
       });
       return;
     }
 
-    // Replying with our command information embed
-    interaction.reply({ embeds: [
-      generateCommandInfoEmbed(
-        clientCmd,
-        interaction
-      )
-    ] });
+    interaction.reply({ 
+      embeds: [generateCommandInfoEmbed(clientCmd, interaction)] 
+    });
   }
 });

@@ -2,12 +2,15 @@ const { ComponentCommand } = require('../../classes/Commands');
 const { requireSessionConditions } = require('../../modules/music');
 const { useQueue } = require('discord-player');
 const { createMusicControlButtons } = require('../../modules/music-buttons');
+const { createSuccessEmbed, createErrorEmbed } = require('../../modules/embed-utils');
 
 module.exports = new ComponentCommand({
   run: async (client, interaction) => {
     const { emojis } = client.container;
     const { member, guild } = interaction;
 
+    await interaction.deferReply({ ephemeral: true });
+    
     if (!requireSessionConditions(interaction, true)) return;
 
     try {
@@ -16,7 +19,8 @@ module.exports = new ComponentCommand({
         const player = client.players.get(guild.id);
         
         if (!queue || !player) {
-          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          return interaction.editReply({ embeds: [errorEmbed] });
         }
 
         const loopModes = ['off', 'track', 'queue'];
@@ -42,11 +46,13 @@ module.exports = new ComponentCommand({
           }
         }
         
-        await interaction.reply(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
+        const successEmbed = createSuccessEmbed(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
+        await interaction.editReply({ embeds: [successEmbed] });
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
-          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          return interaction.editReply({ embeds: [errorEmbed] });
         }
 
         const currentMode = queue.repeatMode;
@@ -72,10 +78,12 @@ module.exports = new ComponentCommand({
           }
         }
         
-        await interaction.reply(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
+        const successEmbed = createSuccessEmbed(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
+        await interaction.editReply({ embeds: [successEmbed] });
       }
     } catch (e) {
-      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      interaction.editReply({ embeds: [errorEmbed] });
     }
   }
 });

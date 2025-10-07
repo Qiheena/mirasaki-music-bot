@@ -50,14 +50,20 @@ async function playNextTrack(client, guildId, queue, player) {
           success = true;
           
           const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
+          
+          // Enhanced metadata
+          const source = nextTrack.info.sourceName || 'Unknown';
+          const isLive = nextTrack.info.isStream || false;
+          
           const embed = new EmbedBuilder()
             .setColor(0xFF69B4)
             .setTitle(nextTrack.info.title)
             .setURL(nextTrack.info.uri)
             .setDescription([
-              `**Author:** ${nextTrack.info.author || 'Unknown'}`,
-              `**Duration:** ${msToTime(nextTrack.info.length)}`,
-              `**Requested by:** <@${nextTrack.requester.id}>`,
+              `**🎤 Artist:** ${nextTrack.info.author || 'Unknown'}`,
+              `**⏱️ Duration:** ${isLive ? '🔴 LIVE' : msToTime(nextTrack.info.length)}`,
+              `**📡 Source:** ${source.toUpperCase()}`,
+              `**👤 Requested by:** <@${nextTrack.requester.id}>`,
               '',
               `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
             ].join('\n'))

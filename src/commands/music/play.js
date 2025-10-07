@@ -39,16 +39,22 @@ module.exports = new ChatInputCommand({
     // Quick check: user must be in voice channel
     const channel = member.voice?.channel;
     if (!channel) {
-      return interaction.reply({ content: `${ emojis.error } ${ member }, you must be in a voice channel to use this command!`, ephemeral: true });
+      const { createErrorEmbed } = require('../../modules/embed-utils');
+      const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, you must be in a voice channel to use this command!`);
+      return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
     }
 
     // Check permissions before joining
     if (!channel.viewable || !channel.joinable) {
-      return interaction.reply({ content: `${ emojis.error } ${ member }, I don't have permission to join your voice channel!`, ephemeral: true });
+      const { createErrorEmbed } = require('../../modules/embed-utils');
+      const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, I don't have permission to join your voice channel!`);
+      return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
     }
 
     if (channel.full && !channel.members.some((m) => m.id === client.user.id)) {
-      return interaction.reply({ content: `${ emojis.error } ${ member }, your voice channel is full!`, ephemeral: true });
+      const { createErrorEmbed } = require('../../modules/embed-utils');
+      const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, your voice channel is full!`);
+      return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
     }
 
     // Join voice channel IMMEDIATELY
@@ -57,7 +63,9 @@ module.exports = new ChatInputCommand({
       if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
         const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
         if (!node) {
-          const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, no Lavalink nodes connected. Try again later.`, withResponse: true });
+          const { createErrorEmbed } = require('../../modules/embed-utils');
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no Lavalink nodes connected. Try again later.`);
+          const errorMsg = await interaction.reply({ embeds: [errorEmbed], withResponse: true });
           setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
           return;
         }
@@ -74,19 +82,25 @@ module.exports = new ChatInputCommand({
         }
       }
     } catch (joinError) {
-      const errorMsg = await interaction.reply({ content: `${ emojis.error } ${ member }, failed to join voice channel: ${joinError.message}`, withResponse: true });
+      const { createErrorEmbed } = require('../../modules/embed-utils');
+      const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, failed to join voice channel: ${joinError.message}`);
+      const errorMsg = await interaction.reply({ embeds: [errorEmbed], withResponse: true });
       setTimeout(() => errorMsg.delete().catch(() => {}), 10000);
       return;
     }
 
     // Send "Starting play" message
-    searchMessage = await interaction.reply({ content: `▶️ Starting play **${query}**`, withResponse: true });
+    const { createInfoEmbed } = require('../../modules/embed-utils');
+    const startEmbed = createInfoEmbed(`▶️ Starting play **${query}**`);
+    searchMessage = await interaction.reply({ embeds: [startEmbed], withResponse: true });
 
     // Return if attachment content type is not allowed
     if (attachment) {
       const contentIsAllowed = isAllowedContentType(ALLOWED_CONTENT_TYPE, attachment?.contentType ?? 'unknown');
       if (!contentIsAllowed.strict) {
-        await searchMessage.edit({ content: `${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.` });
+        const { createErrorEmbed } = require('../../modules/embed-utils');
+        const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, file rejected. Content type is not **\`${ ALLOWED_CONTENT_TYPE }\`**, received **\`${ attachment.contentType ?? 'unknown' }\`** instead.`);
+        await searchMessage.edit({ embeds: [errorEmbed] });
         setTimeout(() => searchMessage.delete().catch(() => {}), 10000);
         return;
       }
@@ -98,16 +112,27 @@ module.exports = new ChatInputCommand({
         // Use Shoukaku (Lavalink) - get first available node
         const node = [...client.lavalink.nodes.values()].find(n => n.state === 2); // state 2 = connected
         if (!node) {
-          interaction.editReply(`${ emojis.error } ${ member }, no Lavalink nodes are connected. Please try again later.`);
+          const { createErrorEmbed } = require('../../modules/embed-utils');
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no Lavalink nodes are connected. Please try again later.`);
+          interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
 
-        // Search for the track
+        // Search for the track with improved accuracy
         const searchQuery = attachment?.url ?? query;
-        const result = await node.rest.resolve(searchQuery.startsWith('http') ? searchQuery : `ytsearch:${searchQuery}`);
+        let searchPrefix = 'ytsearch:';
+        
+        // Improve search accuracy by detecting source
+        if (searchQuery.toLowerCase().includes('soundcloud')) searchPrefix = 'scsearch:';
+        else if (searchQuery.toLowerCase().includes('spotify')) searchPrefix = 'spsearch:';
+        else if (searchQuery.toLowerCase().includes('youtube') || searchQuery.toLowerCase().includes('youtu.be')) searchPrefix = 'ytsearch:';
+        
+        const result = await node.rest.resolve(searchQuery.startsWith('http') ? searchQuery : `${searchPrefix}${searchQuery}`);
         
         if (!result || (result.loadType === 'empty' || result.loadType === 'error')) {
-          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          const { createErrorEmbed } = require('../../modules/embed-utils');
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
 
@@ -174,7 +199,9 @@ module.exports = new ChatInputCommand({
         }
 
         if (tracks.length === 0) {
-          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\``);
+          const { createErrorEmbed } = require('../../modules/embed-utils');
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\``);
+          interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
 
@@ -196,14 +223,20 @@ module.exports = new ChatInputCommand({
             await player.setGlobalVolume(queue.volume);
             
             const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
+            
+            // Enhanced metadata
+            const source = track.info.sourceName || 'Unknown';
+            const isLive = track.info.isStream || false;
+            
             const embed = new EmbedBuilder()
               .setColor(0xFF69B4)
               .setTitle(track.info.title)
               .setURL(track.info.uri)
               .setDescription([
-                `**Author:** ${track.info.author || 'Unknown'}`,
-                `**Duration:** ${msToTime(track.info.length)}`,
-                `**Requested by:** <@${track.requester.id}>`,
+                `**🎤 Artist:** ${track.info.author || 'Unknown'}`,
+                `**⏱️ Duration:** ${isLive ? '🔴 LIVE' : msToTime(track.info.length)}`,
+                `**📡 Source:** ${source.toUpperCase()}`,
+                `**👤 Requested by:** <@${track.requester.id}>`,
                 '',
                 `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
               ].join('\n'))
@@ -229,13 +262,14 @@ module.exports = new ChatInputCommand({
           }
         }
 
-        // Feedback
+        // Feedback with embed
+        const { createSuccessEmbed } = require('../../modules/embed-utils');
         const trackTitle = firstTrack.info.title;
-        if (tracks.length > 1) {
-          await interaction.editReply(`${ emojis.success } ${ member }, enqueued **${tracks.length}** tracks! First: **\`${ trackTitle }\`**`);
-        } else {
-          await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ trackTitle }\`**!`);
-        }
+        const feedbackEmbed = tracks.length > 1 
+          ? createSuccessEmbed(`${emojis.success} ${member}, enqueued **${tracks.length}** tracks! First: **\`${trackTitle}\`**`)
+          : createSuccessEmbed(`${emojis.success} ${member}, enqueued **\`${trackTitle}\`**!`);
+        
+        await interaction.editReply({ embeds: [feedbackEmbed] });
 
       } else {
         // Use discord-player (fallback)
@@ -247,7 +281,9 @@ module.exports = new ChatInputCommand({
           .catch(() => null);
         
         if (!searchResult || !searchResult.hasTracks()) {
-          interaction.editReply(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          const { createErrorEmbed } = require('../../modules/embed-utils');
+          const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no tracks found for query \`${ query }\` - this command has been cancelled`);
+          interaction.editReply({ embeds: [errorEmbed] });
           return;
         }
 
@@ -295,16 +331,20 @@ module.exports = new ChatInputCommand({
           queue.filters.equalizer.disable();
         }
 
-        await interaction.editReply(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
+        const { createSuccessEmbed } = require('../../modules/embed-utils');
+        const successEmbed = createSuccessEmbed(`${ emojis.success } ${ member }, enqueued **\`${ track.title }\`**!`);
+        await interaction.editReply({ embeds: [successEmbed] });
       }
     } catch (e) {
       console.error('Play command error:', e);
+      const { createErrorEmbed } = require('../../modules/embed-utils');
       const errorMessage = e.message || 'Unknown error occurred';
       const maxLength = 1900;
       const truncatedMessage = errorMessage.length > maxLength 
         ? errorMessage.substring(0, maxLength) + '...\n\n(Error message truncated)'
         : errorMessage;
-      interaction.editReply(`${ emojis.error } ${ member }, something went wrong:\n\n${ truncatedMessage }`);
+      const errorEmbed = createErrorEmbed(`${emojis.error} ${member}, something went wrong:\n\n${truncatedMessage}`);
+      interaction.editReply({ embeds: [errorEmbed] });
     }
   }
 });
