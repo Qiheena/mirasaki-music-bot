@@ -25,10 +25,12 @@ module.exports = new ChatInputCommand({
     ]
   },
   run: async (client, interaction) => {
-    const { emojis } = client.container;
     const { member, guild } = interaction;
     const volume = interaction.options.getInteger('volume');
     const guilds = db.getCollection('guilds');
+
+    // ✅ Custom emoji (success)
+    const successEmoji = '<:emoji_1:1309093521357013022>';
 
     // Check conditions/state
     if (!requireSessionConditions(interaction, false)) return;
@@ -36,7 +38,7 @@ module.exports = new ChatInputCommand({
     // Resolve settings
     const settings = getGuildSettings(guild.id);
     if (!volume) {
-      interaction.reply(`${ emojis.success } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
+      await interaction.reply(`${ successEmoji } ${ member }, volume is currently set to **\`${ settings.volume ?? clientConfig.defaultVolume }\`**`);
       return;
     }
 
@@ -54,16 +56,18 @@ module.exports = new ChatInputCommand({
         if (guildPlayerNode?.isPlaying()) guildPlayerNode.setVolume(volume);
       }
 
-      // Perform and notify collection that the document has changed
+      // Save volume to database
       settings.volume = volume;
       guilds.update(settings);
       saveDb();
 
-      // Feedback
-      await interaction.reply({ content: `${ emojis.success } ${ member }, volume set to \`${ volume }\`` });
+      // ✅ Success feedback
+      await interaction.reply({ 
+        content: `${ successEmoji } ${ member }, volume set to \`${ volume }\`` 
+      });
     }
     catch (e) {
-      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      await interaction.reply(`${ member }, something went wrong:\n\n${ e.message }`);
     }
   }
 });
