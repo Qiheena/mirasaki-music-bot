@@ -12,13 +12,17 @@ async function playNextTrack(client, guildId, queue, player) {
       return;
     }
     
+    // Save current track before calling next() for autoplay
+    const previousTrack = queue.current;
     let nextTrack = queue.next();
     
-    if (!nextTrack && queue.autoplay && queue.current) {
+    // Check autoplay using the saved previous track
+    if (!nextTrack && queue.autoplay && previousTrack) {
       try {
+        logger.debug(`Autoplay enabled, searching for similar songs based on: ${previousTrack.info.title}`);
         const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
         if (node) {
-          const searchQuery = `${queue.current.info.author} ${queue.current.info.title}`;
+          const searchQuery = `${previousTrack.info.author} ${previousTrack.info.title}`;
           const result = await node.rest.resolve(`ytsearch:${searchQuery}`);
           
           if (result && result.data && result.data.length > 1) {
@@ -26,11 +30,16 @@ async function playNextTrack(client, guildId, queue, player) {
             nextTrack = {
               track: recommendedTrack.encoded,
               info: recommendedTrack.info,
-              requester: queue.current.requester
+              requester: previousTrack.requester
             };
             queue.add(nextTrack);
             nextTrack = queue.next();
+            logger.success(`Autoplay: Added "${nextTrack.info.title}" to queue`);
+          } else {
+            logger.debug('Autoplay: Not enough search results found');
           }
+        } else {
+          logger.debug('Autoplay: No Lavalink node available');
         }
       } catch (e) {
         logger.syserr('Autoplay error:');
