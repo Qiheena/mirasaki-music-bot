@@ -127,6 +127,8 @@ module.exports = new ChatInputCommand({
         let queue = client.queues.get(guild.id);
         if (!queue) {
           const { createQueue } = require('../../lavalink-setup');
+          const { setupPlayerEvents } = require('../../modules/player-events');
+          const { startVoiceActivityMonitor } = require('../../modules/voice-activity');
           const settings = await getGuildSettings(guild.id);
           
           let eventChannel = interaction.channel;
@@ -145,102 +147,8 @@ module.exports = new ChatInputCommand({
           queue.volume = Math.min(100, settings.volume ?? clientConfig.defaultVolume);
           client.queues.set(guild.id, queue);
 
-          // Set up player events
-          player.on('end', async (data) => {
-            if (data.reason === 'replaced') return;
-            
-            if (queue.currentMessage) {
-              try {
-                await queue.currentMessage.delete().catch(() => {});
-              } catch (e) {
-              }
-              queue.currentMessage = null;
-            }
-            
-            let nextTrack = queue.next();
-            
-            if (!nextTrack && queue.autoplay && queue.current) {
-              try {
-                const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
-                if (node) {
-                  const searchQuery = `${queue.current.info.author} ${queue.current.info.title}`;
-                  const result = await node.rest.resolve(`ytsearch:${searchQuery}`);
-                  
-                  if (result && result.data && result.data.length > 1) {
-                    const recommendedTrack = result.data[1];
-                    nextTrack = {
-                      track: recommendedTrack.encoded,
-                      info: recommendedTrack.info,
-                      requester: queue.current.requester
-                    };
-                    queue.add(nextTrack);
-                    nextTrack = queue.next();
-                  }
-                }
-              } catch (e) {
-                console.error('Autoplay error:', e);
-              }
-            }
-            
-            if (nextTrack) {
-              await player.playTrack({ track: { encoded: nextTrack.track } });
-              
-              const indiaTime = Math.floor((Date.now() + 19800000) / 1000);
-              const embed = new EmbedBuilder()
-                .setColor(0xFF69B4)
-                .setTitle(nextTrack.info.title)
-                .setURL(nextTrack.info.uri)
-                .setDescription([
-                  `**Author:** ${nextTrack.info.author || 'Unknown'}`,
-                  `**Duration:** ${msToTime(nextTrack.info.length)}`,
-                  `**Requested by:** <@${nextTrack.requester.id}>`,
-                  '',
-                  `<t:${indiaTime}:T> || ❤️ made by @rasavedic ❤️`
-                ].join('\n'))
-                .setThumbnail(nextTrack.info.artworkUrl);
-
-              const buttons = createMusicControlButtons(
-                guild.id,
-                true,
-                false,
-                queue.history.length > 0,
-                queue.autoplay,
-                queue.loop
-              );
-
-              const nowPlayingMessage = await queue.metadata.channel?.send({
-                embeds: [embed],
-                components: buttons
-              });
-
-              if (nowPlayingMessage) {
-                queue.currentMessage = nowPlayingMessage;
-              }
-            } else {
-              if (queue.disconnectTimeout) {
-                clearTimeout(queue.disconnectTimeout);
-              }
-              
-              queue.disconnectTimeout = setTimeout(async () => {
-                if (queue.tracks.length === 0 && !queue.current && !player.track) {
-                  if (queue.currentMessage) {
-                    try {
-                      await queue.currentMessage.delete().catch(() => {});
-                    } catch (e) {
-                    }
-                  }
-                  client.lavalink.leaveVoiceChannel(guild.id);
-                  client.queues.delete(guild.id);
-                  client.players.delete(guild.id);
-                }
-              }, 60000);
-            }
-          });
-
-          player.on('exception', (data) => {
-            console.error('Player exception:', data);
-            queue.metadata.channel?.send(`${ emojis.error } An error occurred while playing: ${data.exception?.message || 'Unknown error'}`);
-          });
+          setupPlayerEvents(client, guild.id, player, queue, emojis);
+          startVoiceActivityMonitor(client, guild.id);
         }
 
         // Handle playlist or single track

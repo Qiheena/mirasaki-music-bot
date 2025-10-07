@@ -58,25 +58,30 @@ function initializeLavalink(client) {
     logger.warn(`Lavalink node disconnected: ${name} (${count} players affected)`);
     
     if (count > 0) {
-      client.players.forEach(async (player, guildId) => {
+      for (const [guildId, player] of client.players.entries()) {
         const queue = client.queues.get(guildId);
         if (queue && queue.current) {
           try {
             const availableNode = [...shoukaku.nodes.values()].find(n => n.state === 2);
             if (availableNode) {
               logger.info(`Attempting to restore playback for guild ${guildId}`);
+              
               const newPlayer = await shoukaku.joinVoiceChannel({
                 guildId: guildId,
                 channelId: queue.metadata.voiceChannel.id,
-                shardId: player.guildId ?? 0,
+                shardId: 0,
                 deaf: true
               });
               
               client.players.set(guildId, newPlayer);
               
-              if (queue.current) {
-                await newPlayer.playTrack({ track: { encoded: queue.current.track } });
-                await newPlayer.setGlobalVolume(queue.volume);
+              const { setupPlayerEvents } = require('./modules/player-events');
+              const freshQueue = client.queues.get(guildId);
+              setupPlayerEvents(client, guildId, newPlayer, freshQueue, client.container.emojis);
+              
+              if (freshQueue.current) {
+                await newPlayer.playTrack({ track: { encoded: freshQueue.current.track } });
+                await newPlayer.setGlobalVolume(freshQueue.volume);
                 logger.success(`Restored playback for guild ${guildId}`);
               }
             }
@@ -85,7 +90,7 @@ function initializeLavalink(client) {
             logger.printErr(error);
           }
         }
-      });
+      }
     }
   });
 
@@ -223,7 +228,11 @@ async function cleanupGuildPlayer(client, guildId) {
     const player = client.players.get(guildId);
     if (player) {
       try {
-        await player.connection.disconnect();
+        if (client.lavalink) {
+          await client.lavalink.leaveVoiceChannel(guildId);
+        } else {
+          await player.connection?.disconnect(true);
+        }
       } catch (e) {
         logger.debug(`Error disconnecting player for guild ${guildId}: ${e.message}`);
       }
@@ -231,10 +240,19 @@ async function cleanupGuildPlayer(client, guildId) {
     }
     
     const queue = client.queues.get(guildId);
-    if (queue && queue.currentMessage) {
-      try {
-        await queue.currentMessage.delete().catch(() => {});
-      } catch (e) {
+    if (queue) {
+      if (queue.currentMessage) {
+        try {
+          await queue.currentMessage.delete().catch(() => {});
+        } catch (e) {
+        }
+      }
+      
+      if (queue.disconnectTimeout) {
+        clearTimeout(queue.disconnectTimeout);
+      }
+      if (queue.emptyChannelTimer) {
+        delete queue.emptyChannelTimer;
       }
     }
     

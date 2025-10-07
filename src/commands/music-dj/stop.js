@@ -15,18 +15,21 @@ module.exports = new ChatInputCommand({
 
     try {
       if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
-        const player = client.players.get(guild.id);
-        const queue = client.queues.get(guild.id);
+        const { cleanupGuildPlayer } = require('../../lavalink-setup');
+        const { removePlayerListeners } = require('../../modules/player-events');
+        const { stopVoiceActivityMonitor } = require('../../modules/voice-activity');
         
-        if (player) {
-          await player.stopTrack();
-          client.lavalink.leaveVoiceChannel(guild.id);
+        const queue = client.queues.get(guild.id);
+        if (queue && queue.currentMessage) {
+          try {
+            await queue.currentMessage.delete().catch(() => {});
+          } catch (e) {
+          }
         }
-        if (queue) {
-          queue.clear();
-          client.queues.delete(guild.id);
-        }
-        client.players.delete(guild.id);
+        
+        await cleanupGuildPlayer(client, guild.id);
+        removePlayerListeners(guild.id);
+        stopVoiceActivityMonitor(guild.id);
         
         await interaction.reply(`${ emojis.success } ${ member }, the queue has been cleared and the player was disconnected.`);
       } else {
