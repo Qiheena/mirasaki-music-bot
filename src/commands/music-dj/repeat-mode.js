@@ -61,7 +61,7 @@ module.exports = new ChatInputCommand({
         }
 
         // Map repeat modes: 0=off, 1=track, 2=queue, 3=autoplay
-        const loopModes = ['off', 'track', 'queue', 'off'];
+        const loopModes = ['off', 'track', 'queue', 'autoplay'];
         queue.loop = loopModes[repeatMode];
         const modeEmoji = repeatModeEmoji(repeatMode);
 
