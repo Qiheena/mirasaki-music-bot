@@ -6,6 +6,20 @@ const {
   getGuildSettings, db, saveDb
 } = require('../../modules/db');
 
+// Helper to get current repeat mode
+async function getCurrentRepeatMode(client, guildId) {
+  if (process.env.USE_LAVALINK === 'true' && client.lavalink) {
+    const queue = client.queues.get(guildId);
+    if (!queue) return 0;
+    const loopModes = ['off', 'track', 'queue', 'autoplay'];
+    return loopModes.indexOf(queue.loop) || 0;
+  } else {
+    const queue = useQueue(guildId);
+    if (!queue) return 0;
+    return queue.repeatMode || 0;
+  }
+}
+
 module.exports = new ChatInputCommand({
   global: true,
   aliases: ['repeat', 'loop'],
@@ -46,8 +60,21 @@ module.exports = new ChatInputCommand({
     const {
       guild, member, options
     } = interaction;
-    const repeatMode = Number(options.getString('mode') ?? 0);
-    const shouldSave = options.getBoolean('persistent') ?? false;
+    
+    // Handle button interactions (no options)
+    let repeatMode = 0;
+    let shouldSave = false;
+    
+    if (interaction.isButton()) {
+      // For button, cycle through modes: 0 -> 1 -> 2 -> 3 -> 0
+      const currentMode = await getCurrentRepeatMode(client, guild.id);
+      repeatMode = (currentMode + 1) % 4;
+      shouldSave = false;
+    } else {
+      // For slash/text commands
+      repeatMode = Number(options.getString('mode') ?? 0);
+      shouldSave = options.getBoolean('persistent') ?? false;
+    }
 
     // Check state
     if (!requireSessionConditions(interaction)) return;

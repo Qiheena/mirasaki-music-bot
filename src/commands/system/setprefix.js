@@ -39,15 +39,18 @@ module.exports = new ChatInputCommand({
     }
 
     // Create buttons for user/guild choice
+    // Encode prefix to avoid special character issues in customId
+    const encodedPrefix = Buffer.from(newPrefix).toString('base64');
+    
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId(`prefix_user_${member.id}_${newPrefix}`)
+          .setCustomId(`prefix_user_${member.id}_${encodedPrefix}`)
           .setLabel('Personal Prefix')
           .setEmoji('👤')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-          .setCustomId(`prefix_guild_${member.id}_${newPrefix}`)
+          .setCustomId(`prefix_guild_${member.id}_${encodedPrefix}`)
           .setLabel('Server Prefix')
           .setEmoji('🌐')
           .setStyle(ButtonStyle.Success)

@@ -7,10 +7,11 @@ module.exports = new ComponentCommand({
     const { emojis } = client.container;
     const { member, customId } = interaction;
 
-    // Parse customId: prefix_user_{userId}_{newPrefix}
+    // Parse customId: prefix_user_{userId}_{encodedPrefix}
     const parts = customId.split('_');
     const userId = parts[2];
-    const newPrefix = parts.slice(3).join('_');
+    const encodedPrefix = parts[3];
+    const newPrefix = Buffer.from(encodedPrefix, 'base64').toString('utf8');
 
     // Check if the button was clicked by the right user
     if (member.id !== userId) {
