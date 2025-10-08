@@ -29,7 +29,7 @@ const generateEmbed = (page, categorizedData, client, prefix, totalPages) => {
   const embed = new EmbedBuilder()
     .setColor(colorResolver())
     .setTimestamp()
-    // Update footer to use the dynamically calculated totalPages
+    // Footer mein dynamic totalPages ka upyog
     .setFooter({ text: `Page ${page + 1}/${totalPages} • Made With ❤️ @Rasavedic` });
 
   if (page === 0) {
@@ -54,7 +54,7 @@ const generateEmbed = (page, categorizedData, client, prefix, totalPages) => {
       .setDescription(`**${category.name}** category mein available sabhi commands yahaan hain.`);
 
     category.commands.forEach(cmd => {
-      // Command name aur description modules se nikalna
+      // Command name, aliases, aur description modules se nikalna
       const aliases = cmd.aliases?.length ? `\n*Aliases: \`${cmd.aliases.join('`, `')}\`*` : '';
       embed.addFields({
         name: `\`${prefix}${cmd.data.name}\``,
