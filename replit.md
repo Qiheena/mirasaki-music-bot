@@ -62,6 +62,14 @@ Preferred communication style: Simple, everyday language.
 - **Better error handling**: Catches and logs voice channel errors properly
 - **Clean disconnection**: Removes all listeners before cleanup
 
+#### Queue & Button Enhancements (October 2025)
+- **Shuffle button added**: New shuffle button on music controls for easy queue randomization
+- **Improved autoplay**: Now plays truly related songs by searching artist catalog instead of same song from different uploaders
+- **Smart song selection**: Autoplay picks random tracks from top 5 artist songs, excluding duplicates
+- **Message auto-delete**: Bot responses now auto-delete after 10-15 seconds to keep chat clean
+- **Clean chat system**: All button interactions and command responses are automatically cleaned up
+- **Loop functionality verified**: Loop modes (track/queue/off) work correctly with proper state management
+
 ## System Architecture
 
 ### Core Framework
