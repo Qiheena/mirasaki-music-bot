@@ -17,7 +17,7 @@ const {
 // Re-usable callback
 const commandMapCallback = (filePath) => {
   const cmd = require(filePath);
-  cmd.load(filePath, false);
+ // cmd.load(filePath, false);
   delete cmd.filePath; // Delete our origin filePath
   return cmd;
 };
