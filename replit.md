@@ -83,6 +83,14 @@ Preferred communication style: Simple, everyday language.
   - Lavalink resume timeout increased to 300s
   - More reconnection attempts (50 instead of 25)
   - Better error recovery and connection stability
+- **Sleep Command Enhancement**: Added "sl" alias for quick access to sleep timer
+- **Prefix System Overhaul**: Completely redesigned prefix management:
+  - Simplified command: `/setprefix <new_prefix>` (no more subcommands)
+  - User/Guild selection via interactive buttons
+  - Personal prefix support (user-specific prefix that works everywhere)
+  - Server prefix with permission checks (Admin/Moderator/Owner only)
+  - Automatic announcement when server prefix is changed
+  - Data persists through restarts (saved to Firebase)
 
 #### Lyrics System Upgrade (October 2025)
 - **LRCLIB API Integration**: Replaced previous lyrics service with powerful LRCLIB API
