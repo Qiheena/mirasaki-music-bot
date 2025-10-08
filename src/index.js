@@ -184,7 +184,7 @@ for (const filePath of getFiles(CHAT_INPUT_COMMAND_DIR)) {
   try {
     const command = require(filePath);
 
-    command.load(filePath, commands);
+  //  command.load(filePath, commands);
 
     // loadAliases AFTER #load(), setting the origin filepath
     // Aliases are loaded for PREFIX command support
