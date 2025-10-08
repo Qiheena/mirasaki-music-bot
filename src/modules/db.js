@@ -20,7 +20,7 @@ if (useFirebase) {
   dbModule = require('./firebase-db');
 } else {
   // Fallback to LokiJS for local development
-  logger.warn('Firebase credentials not found, using LokiJS (local file storage)');
+  logger.info('Firebase credentials not found, using LokiJS (local file storage)');
   
   const loki = require('lokijs');
   const fsAdapter = new loki.LokiFsAdapter();
