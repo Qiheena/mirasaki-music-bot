@@ -106,6 +106,20 @@ async function playNextTrack(client, guildId, queue, player) {
               logger.debug(`Could not delete message: ${e.message}`);
             }
           }
+          
+          // Clean up lyrics messages when song ends
+          if (queue.lyricsMessages && queue.lyricsMessages.length > 0) {
+            for (const lyricsData of queue.lyricsMessages) {
+              try {
+                if (lyricsData.message && lyricsData.message.delete) {
+                  await lyricsData.message.delete().catch(() => {});
+                }
+              } catch (e) {
+                logger.debug(`Could not delete lyrics message: ${e.message}`);
+              }
+            }
+            queue.lyricsMessages = [];
+          }
 
           const nowPlayingMessage = await queue.metadata.channel?.send({
             embeds: [embed],

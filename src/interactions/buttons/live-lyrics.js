@@ -71,6 +71,19 @@ module.exports = new ComponentCommand({
       .setTimestamp();
 
     const message = await interaction.editReply({ embeds: [embed] });
+    
+    // Track live lyrics message for cleanup when song ends
+    if (process.env.USE_LAVALINK === 'true') {
+      const queue = client.queues?.get(guildId);
+      if (queue) {
+        if (!queue.lyricsMessages) queue.lyricsMessages = [];
+        queue.lyricsMessages.push({ 
+          message: message,
+          interactionId: interaction.id,
+          updateInterval: null
+        });
+      }
+    }
 
     // Auto-update lyrics every 2 seconds for 30 seconds
     const updateInterval = setInterval(async () => {

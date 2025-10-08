@@ -126,10 +126,31 @@ module.exports = new ChatInputCommand({
       }
 
       // Feedback
-      await interaction.editReply({ 
+      const lyricsMessage = await interaction.editReply({ 
         embeds: [lyricsEmbed],
         components
       });
+      
+      // Track lyrics message for cleanup when song ends
+      if (process.env.USE_LAVALINK === 'true') {
+        const queue = client.queues?.get(guild.id);
+        if (queue) {
+          if (!queue.lyricsMessages) queue.lyricsMessages = [];
+          queue.lyricsMessages.push({ 
+            message: lyricsMessage,
+            interactionId: interaction.id 
+          });
+        }
+      } else {
+        const queue = useQueue(guild.id);
+        if (queue) {
+          if (!queue.metadata.lyricsMessages) queue.metadata.lyricsMessages = [];
+          queue.metadata.lyricsMessages.push({ 
+            message: lyricsMessage,
+            interactionId: interaction.id 
+          });
+        }
+      }
     }
     catch (e) {
       interaction.editReply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
