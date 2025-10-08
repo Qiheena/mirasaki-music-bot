@@ -71,6 +71,19 @@ Preferred communication style: Simple, everyday language.
 - **Loop functionality verified**: Loop modes (track/queue/off) work correctly with proper state management
 - **Metadata display fixed**: Provisional "Added To Queue" message now properly deleted to show clean metadata
 
+#### Latest Critical Fixes (October 08, 2025)
+- **Loop/Repeat Bug Fixed**: Autoplay mode (mode 3) now correctly displays and functions instead of showing as 'off'
+- **Auto-delete Messages**: Now playing messages auto-delete based on guild settings (configurable via `/set-autodelete`)
+- **Smart Message Cleanup**: Old buttons and metadata automatically removed when tracks change
+- **Lyrics Auto-cleanup**: Lyrics messages (both regular and live) are automatically deleted when song ends
+- **Streaming Optimization**: Significantly improved buffer settings to prevent sound breaking after 20-30 minutes:
+  - Increased live buffer from 20s to 40s
+  - Increased chunk size from 4MB to 10MB  
+  - Extended connection timeout from 30s to 60s
+  - Lavalink resume timeout increased to 300s
+  - More reconnection attempts (50 instead of 25)
+  - Better error recovery and connection stability
+
 #### Lyrics System Upgrade (October 2025)
 - **LRCLIB API Integration**: Replaced previous lyrics service with powerful LRCLIB API
 - **No API key required**: Completely free service with no authentication needed
