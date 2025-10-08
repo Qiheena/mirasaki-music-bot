@@ -1,6 +1,6 @@
 const logger = require('@mirasaki/logger');
 const chalk = require('chalk');
-const { getGuildSettings } = require('../modules/db');
+const { getGuildSettings, db } = require('../modules/db');
 const { getPermissionLevel } = require('../handlers/permissions');
 const { clientConfig, formatBotMessage } = require('../util');
 
@@ -43,10 +43,22 @@ module.exports = async (client, message) => {
       }
     }
   } else {
+    // Check for user-specific prefix first
+    const users = db.getCollection('users');
+    const userSettings = users ? users.findOne({ id: author.id }) : null;
+    const userPrefix = userSettings?.prefix;
+    
     const settings = getGuildSettings(guild.id);
-    prefix = settings.prefix;
+    const guildPrefix = settings.prefix;
 
-    if (!content.startsWith(prefix)) return;
+    // Try user prefix first, then guild prefix
+    if (userPrefix && content.startsWith(userPrefix)) {
+      prefix = userPrefix;
+    } else if (guildPrefix && content.startsWith(guildPrefix)) {
+      prefix = guildPrefix;
+    } else {
+      return;
+    }
 
     const words = content.slice(prefix.length).trim().split(/\s+/);
     commandName = words[0].toLowerCase();
