@@ -206,7 +206,7 @@ function setupPlayerEvents(client, guildId, player, queue, emojis) {
   };
 
   const stuckHandler = async (data) => {
-    logger.warn(`Player stuck in guild ${guildId}, threshold: ${data.thresholdMs}ms, attempting recovery`);
+    logger.debug(`Player stuck in guild ${guildId}, threshold: ${data.thresholdMs}ms, attempting recovery`);
     
     const currentQueue = client.queues.get(guildId);
     if (currentQueue) {
