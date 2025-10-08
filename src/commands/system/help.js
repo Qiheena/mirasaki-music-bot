@@ -12,83 +12,118 @@ module.exports = new ChatInputCommand({
     usages: 2,
     duration: 10
   },
-  clientPerms: [ 'EmbedLinks' ],
+  clientPerms: ['EmbedLinks'],
   data: {
     description: 'Get help and see all available bot commands',
-    options: [ commandAutoCompleteOption ]
+    options: [commandAutoCompleteOption]
   },
 
   run: async (client, interaction) => {
-    const { member, guild } = interaction;
+    const { guild } = interaction;
     const { commands, emojis } = client.container;
+
+    // Fetch guild-specific settings, defaulting to '!' prefix
     const settings = getGuildSettings(guild.id);
     const prefix = settings?.prefix || '!';
 
     const commandName = interaction.options.getString('command');
 
-    if (!commandName) {
-      // Simple overview with categorized commands
+    // Display detailed help for a SPECIFIC command
+    if (commandName) {
+      const cmd = commands.get(commandName.toLowerCase()) || commands.find(c => c.aliases?.includes(commandName.toLowerCase()));
+      if (!cmd) {
+        const reply = await interaction.reply({
+          content: `${emojis.error} The command **"${commandName}"** was not found.`,
+          ephemeral: true,
+          fetchReply: true
+        });
+        return; // No need to auto-delete an ephemeral message
+      }
+
+      // Format aliases for display
+      const aliases = cmd.aliases?.length
+        ? cmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
+        : 'None';
+
       const embed = new EmbedBuilder()
-        .setColor(0xFF69B4)
-        .setTitle('🎵 Music Bot Commands')
-        .setDescription(`**Quick Start:** Type \`${prefix}play <song name>\` to play music!\nUse \`/help <command>\` to see details about any command.\n\n**Your Prefix:** \`${prefix}\``)
+        .setColor(colorResolver())
+        .setTitle(`📖 Command Help: /${cmd.data.name}`)
+        .setDescription(cmd.data.description || 'No description available for this command.')
         .addFields(
-          {
-            name: '🎵 Music Playback',
-            value: `\`play\` - Play a song from YouTube, Spotify, SoundCloud\n\`pause\` - Pause the current song\n\`resume\` - Resume playback\n\`skip\` - Skip to next song\n\`stop\` - Stop and clear queue\n\`now-playing\` - Show current playing song`,
-            inline: false
-          },
-          {
-            name: '📝 Queue Management',
-            value: `\`queue\` - View the music queue\n\`clear-queue\` - Remove all songs from queue\n\`shuffle\` - Shuffle the queue\n\`remove-song\` - Remove a song from queue\n\`move-song\` - Change song position in queue`,
-            inline: false
-          },
-          {
-            name: '🎧 Audio Controls',
-            value: `\`volume\` - Change playback volume (0-200)\n\`repeat-mode\` - Loop current song or queue\n\`autoplay\` - Auto-play similar songs\n\`audio-filters\` - Add special audio effects`,
-            inline: false
-          },
-          {
-            name: '🔍 Search & History',
-            value: `\`search\` - Search and choose from results\n\`history\` - View previously played songs\n\`lyrics\` - Display song lyrics`,
-            inline: false
-          },
-          {
-            name: '⚙️ Settings',
-            value: `\`setprefix\` - Change command prefix\n\`volume\` - Set default volume\n\`dj-roles\` - Set DJ roles for music commands`,
-            inline: false
-          }
+          { name: '📁 Category', value: cmd.category || 'Miscellaneous', inline: true },
+          { name: 'Cooldown', value: cmd.cooldown ? `${cmd.cooldown.duration}s` : 'None', inline: true },
+          { name: '🔗 Aliases / Shortcuts', value: aliases, inline: false },
+          { name: '📝 Usage', value: `To use this command, type: \`/${cmd.data.name}\``, inline: false }
         )
-        .setFooter({ text: `💡 Tip: Most commands have shortcuts like ${prefix}p for play` })
+        .setFooter({ text: `Made With ❤️ @Rasavedic • This message will be deleted in 40 seconds.` })
         .setTimestamp();
 
-      return interaction.reply({ embeds: [embed] });
+      const reply = await interaction.reply({ embeds: [embed], fetchReply: true });
+
+      // Auto-delete the message after 40 seconds
+      setTimeout(async () => {
+        try {
+          await reply.delete();
+        } catch (error) {
+          console.log(`Couldn't delete help message (specific command): ${error.message}`);
+        }
+      }, 40000);
+      return;
     }
 
-    // Show detailed info for specific command
-    const cmd = commands.get(commandName);
-    if (!cmd) {
-      const { createErrorEmbed } = require('../../modules/embed-utils');
-      const errorEmbed = createErrorEmbed(`${emojis.error} Command **${commandName}** not found!`);
-      return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+    // Display the main help embed with ALL commands
+    else {
+      // Group commands by category dynamically
+      const categorizedCommands = new Map();
+      commands.forEach(cmd => {
+        // Hide owner-only commands from the public help menu
+        if (cmd.ownerOnly) return;
+
+        const category = cmd.category || 'Miscellaneous';
+        if (!categorizedCommands.has(category)) {
+          categorizedCommands.set(category, []);
+        }
+
+        // Format the command name and its aliases
+        let commandInfo = `\`${prefix}${cmd.data.name}\``;
+        if (cmd.aliases?.length) {
+          commandInfo += ` - \`${prefix}${cmd.aliases.join(`\`, \`${prefix}`)}\``;
+        }
+
+        categorizedCommands.get(category).push(commandInfo);
+      });
+
+      const embed = new EmbedBuilder()
+        .setColor(colorResolver())
+        .setTitle(`${client.user.username} Command Menu`)
+        .setDescription(
+          `Hello! Here is a list of all my available commands.\n` +
+          `Your server's prefix is \`${prefix}\`. You can also use slash commands (e.g., \`/play\`).\n` +
+          `For more details on a specific command, use \`/help <command_name>\`.`
+        )
+        .setThumbnail(client.user.displayAvatarURL())
+        .setFooter({ text: `Made With ❤️ @Rasavedic • This message will be deleted in 40 seconds.` })
+        .setTimestamp();
+
+      // Add a field for each category
+      categorizedCommands.forEach((commandList, category) => {
+        embed.addFields({
+          name: `— ${category} —`,
+          value: commandList.join('\n'),
+          inline: false
+        });
+      });
+
+      const reply = await interaction.reply({ embeds: [embed], fetchReply: true });
+
+      // Auto-delete the message after 40 seconds
+      setTimeout(async () => {
+        try {
+          await reply.delete();
+        } catch (error) {
+          console.log(`Couldn't delete help message (main): ${error.message}`);
+        }
+      }, 40000);
     }
-
-    const aliases = cmd.aliases && cmd.aliases.length > 0 
-      ? cmd.aliases.map(a => `\`${prefix}${a}\``).join(', ')
-      : 'None';
-
-    const embed = new EmbedBuilder()
-      .setColor(0xFF69B4)
-      .setTitle(`📖 Command: /${cmd.data.name}`)
-      .setDescription(cmd.data.description || 'No description available')
-      .addFields(
-        { name: '📌 Usage', value: `\`/${cmd.data.name}\` or \`${prefix}${cmd.data.name}\``, inline: false },
-        { name: '🔗 Shortcuts', value: aliases, inline: false },
-        { name: '📁 Category', value: cmd.category || 'General', inline: true }
-      )
-      .setFooter({ text: `Use ${prefix}help to see all commands` })
-      .setTimestamp();
-
-    return interaction.reply({ embeds: [embed] });
   }
 });
