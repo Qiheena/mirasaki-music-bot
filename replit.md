@@ -71,7 +71,22 @@ Preferred communication style: Simple, everyday language.
 - **Loop functionality verified**: Loop modes (track/queue/off) work correctly with proper state management
 - **Metadata display fixed**: Provisional "Added To Queue" message now properly deleted to show clean metadata
 
-#### Latest Critical Fixes (October 08, 2025)
+#### Latest Critical Fixes - Part 2 (October 08, 2025)
+- **Loop Button Fixed**: Loop button now properly cycles through modes (off → track → queue → autoplay)
+- **Prefix System Fully Working**: 
+  - Fixed button file naming to match customId format
+  - Added base64 encoding for special characters (e.g., `&`, `|`, `?`)
+  - Personal and server prefixes both work correctly
+  - Auto-announcement when server prefix changes
+- **Sleep Command Enhanced**: Now supports both formats:
+  - Slash command: `/sleep hours:1 minutes:30`
+  - Text command: `!sl 30m` or `!sl 1h30m45s` (h=hours, m=minutes, s=seconds)
+- **Metadata Auto-Delete Fixed**: Messages no longer disappear during playback
+  - Auto-delete only triggers AFTER track ends
+  - Prevents deletion while song is still playing
+  - Works correctly with guild auto-delete settings
+
+#### Latest Critical Fixes - Part 1 (October 08, 2025)
 - **Loop/Repeat Bug Fixed**: Autoplay mode (mode 3) now correctly displays and functions instead of showing as 'off'
 - **Auto-delete Messages**: Now playing messages auto-delete based on guild settings (configurable via `/set-autodelete`)
 - **Smart Message Cleanup**: Old buttons and metadata automatically removed when tracks change
