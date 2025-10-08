@@ -237,6 +237,7 @@ for (const filePath of getFiles(BUTTON_INTERACTION_DIR)) {
   try {
     const command = require(filePath);
     //command.load(filePath, buttons);
+          client.container.buttons.set(command.data.customId, command); 
   }
   catch (err) {
     logger.syserr(`Error encountered while loading Button Command (${ BUTTON_INTERACTION_DIR }), are you sure you're exporting an instance of ComponentCommand?\nCommand: ${ filePath }`);
