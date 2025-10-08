@@ -69,6 +69,18 @@ Preferred communication style: Simple, everyday language.
 - **Message auto-delete**: Bot responses now auto-delete after 10-15 seconds to keep chat clean
 - **Clean chat system**: All button interactions and command responses are automatically cleaned up
 - **Loop functionality verified**: Loop modes (track/queue/off) work correctly with proper state management
+- **Metadata display fixed**: Provisional "Added To Queue" message now properly deleted to show clean metadata
+
+#### Lyrics System Upgrade (October 2025)
+- **LRCLIB API Integration**: Replaced previous lyrics service with powerful LRCLIB API
+- **No API key required**: Completely free service with no authentication needed
+- **Synced/Timestamped Lyrics**: Full support for LRC format with precise timing
+- **Live Lyrics Feature**: Real-time synced lyrics display with interactive button
+- **Auto-updating display**: Live lyrics update every 2 seconds showing current line
+- **Context view**: Shows 3 lines before and after current lyric for better reading
+- **Smart timestamp parsing**: Handles both centisecond (2-digit) and millisecond (3-digit) precision
+- **Better search**: Multiple fallback searches (artist + track, track only, album track)
+- **Enhanced UI**: Pink-colored embeds with clear visual indicators for synced content
 
 ## System Architecture
 

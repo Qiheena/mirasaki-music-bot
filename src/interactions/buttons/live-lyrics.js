@@ -7,8 +7,8 @@ module.exports = new ComponentCommand({
     const { emojis } = client.container;
     const { member, guild } = interaction;
 
-    // Extract guild ID from custom ID
-    const guildId = interaction.customId.split('-')[2];
+    // Extract guild ID from custom ID (format: @live-lyrics@{guildId})
+    const guildId = interaction.customId.split('@')[2];
     
     if (!client.syncedLyricsCache || !client.syncedLyricsCache.has(guildId)) {
       return interaction.reply({ 
@@ -27,7 +27,7 @@ module.exports = new ComponentCommand({
       });
     }
 
-    await interaction.deferReply({ ephemeral: false });
+    await interaction.deferReply();
 
     // Calculate current position in song
     const elapsedTime = Date.now() - lyricsData.startTime;

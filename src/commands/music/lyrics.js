@@ -109,7 +109,7 @@ module.exports = new ChatInputCommand({
       if (res.syncedLyrics && currentTrack) {
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-            .setCustomId(`live-lyrics-${guild.id}`)
+            .setCustomId(`@live-lyrics@${guild.id}`)
             .setLabel('🎤 Live Lyrics')
             .setStyle(ButtonStyle.Primary)
         );
