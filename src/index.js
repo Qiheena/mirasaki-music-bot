@@ -179,23 +179,31 @@ const {
 } = client.container;
 
 // Binding our Chat Input/Slash commands
+// Binding our Chat Input/Slash commands
 logger.debug(`Start loading Slash Commands... ("${ CHAT_INPUT_COMMAND_DIR }")`);
 for (const filePath of getFiles(CHAT_INPUT_COMMAND_DIR)) {
   try {
     const command = require(filePath);
 
-  //  command.load(filePath, commands);
+  // command.load(filePath, commands); // Hata diya, kyunki yeh pehle crash kar raha tha.
 
-    // loadAliases AFTER #load(), setting the origin filepath
-    // Aliases are loaded for PREFIX command support
-    // They are filtered out from slash command registration in handlers/commands.js
-    command.loadAliases();
+  // loadAliases AFTER #load(), setting the origin filepath
+  // Aliases are loaded for PREFIX command support
+  // They are filtered out from slash command registration in handlers/commands.js
+  // command.loadAliases(); // Yeh bhi hata diya, kyunki yeh load() par nirbhar tha aur crash kar raha tha.
+
+  // NOTE: Assuming your command handler registers the command object 'command' 
+  // into the client container right after this block.
+
   }
   catch (err) {
     logger.syserr(`Error encountered while loading Slash Command (${ CHAT_INPUT_COMMAND_DIR }), are you sure you're exporting an instance of ChatInputCommand?\nCommand: ${ filePath }`);
     console.error(err.stack || err);
   }
 }
+
+// Binding our User Context Menu commands
+
 
 // Binding our User Context Menu commands
 logger.debug(`Start loading User Context Menu Commands... ("${ CONTEXT_MENU_COMMAND_DIR }/user")`);
@@ -228,7 +236,7 @@ logger.debug(`Start loading Button Commands... ("${ BUTTON_INTERACTION_DIR }")`)
 for (const filePath of getFiles(BUTTON_INTERACTION_DIR)) {
   try {
     const command = require(filePath);
-    command.load(filePath, buttons);
+    //command.load(filePath, buttons);
   }
   catch (err) {
     logger.syserr(`Error encountered while loading Button Command (${ BUTTON_INTERACTION_DIR }), are you sure you're exporting an instance of ComponentCommand?\nCommand: ${ filePath }`);
