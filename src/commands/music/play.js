@@ -271,14 +271,25 @@ module.exports = new ChatInputCommand({
               queue.currentMessage = nowPlayingMessage;
             }
 
+            // Delete the initial "Added To Queue" message to keep chat clean
+            if (searchMessage) {
+              try {
+                await searchMessage.delete();
+              } catch (e) {
+                // Ignore deletion errors
+              }
+            }
+
             const { createSuccessEmbed } = require('../../modules/embed-utils');
+            const { autoDeleteMessage } = require('../../modules/auto-delete');
             const trackTitle = track.info.title || 'No Title';
 
             const feedbackEmbed = tracks.length > 1
               ? createSuccessEmbed(`${emojis.success} ${member}, enqueued **${tracks.length}** tracks! First: **\`${trackTitle}\`**`)
               : createSuccessEmbed(`${emojis.success} ${member}, enqueued **\`${trackTitle}\`**!`);
 
-            await interaction.editReply({ embeds: [feedbackEmbed] });
+            const reply = await interaction.followUp({ embeds: [feedbackEmbed], fetchReply: true });
+            await autoDeleteMessage(reply, 10000);
           }
         }
       } else {
