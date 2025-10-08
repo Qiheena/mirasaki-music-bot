@@ -23,11 +23,11 @@ function initializeLavalink(client) {
     nodes,
     {
       resume: true,
-      resumeTimeout: 120,
+      resumeTimeout: 300,
       resumeByLibrary: true,
-      reconnectTries: 25,
-      reconnectInterval: 2000,
-      restTimeout: 60000,
+      reconnectTries: 50,
+      reconnectInterval: 3000,
+      restTimeout: 90000,
       moveOnDisconnect: true,
       userAgent: 'Discord Music Bot (Shoukaku)',
       structures: {

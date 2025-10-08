@@ -70,10 +70,15 @@ const player = new Player(client, {
     highWaterMark: 1 << 26,
     filter: 'audioonly',
     quality: 'highestaudio',
-    liveBuffer: 20000,
-    dlChunkSize: 1024 * 1024 * 4
+    liveBuffer: 40000,
+    dlChunkSize: 1024 * 1024 * 10,
+    requestOptions: {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    }
   },
-  connectionTimeout: 30000
+  connectionTimeout: 60000
 });
 
 if (!USE_LAVALINK) {
