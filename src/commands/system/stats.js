@@ -1,3 +1,4 @@
+const os = require('os');
 const { ChatInputCommand } = require('../../classes/Commands');
 const { stripIndents } = require('common-tags');
 const { version } = require('discord.js');
@@ -5,105 +6,170 @@ const { BYTES_IN_KIB } = require('../../constants');
 const { colorResolver, msToHumanReadableTime } = require('../../util');
 
 const discordVersion = version.indexOf('dev') < 0 ? version : version.slice(0, version.indexOf('dev') + 3);
-const discordVersionDocLink = `https://discord.js.org/#/docs/discord.js/v${ discordVersion.split('.')[0] }/general/welcome`;
-const nodeVersionDocLink = `https://nodejs.org/docs/latest-${ process.version.split('.')[0] }.x/api/#`;
+const discordVersionDocLink = `https://discord.js.org/#/docs/discord.js/v${discordVersion.split('.')[0]}/general/welcome`;
+const nodeVersionDocLink = `https://nodejs.org/docs/latest-${process.version.split('.')[0]}.x/api/#`;
 
 module.exports = new ChatInputCommand({
   global: true,
-  cooldown: {
-    // Use channel cooldown type instead of default member
-    type: 'channel',
-    usages: 1,
-    duration: 30
-  },
-  clientPerms: [ 'EmbedLinks' ],
-  aliases: ['status', 'info'],
-  data: { description: 'Displays bot stats' },
+  cooldown: { type: 'channel', usages: 1, duration: 30 },
+  clientPerms: ['EmbedLinks'],
+  aliases: ['status', 'info', 'st', 'ping', 'stats'],
+  data: { description: 'Displays detailed bot & system stats' },
 
   run: async (client, interaction) => {
     const { emojis } = client.container;
 
-    // Calculating our API latency
+    // Ping Calculations - More accurate method
     const latency = Math.round(client.ws.ping);
-    const response = await interaction.reply({
-      content: 'Pinging...',
-      withResponse: true
-    });
-    const sent = await response.fetch();
-    const fcLatency = sent.createdTimestamp - interaction.createdTimestamp;
+    const startTime = Date.now();
+    const response = await interaction.reply({ content: '📡 Checking ping...', fetchReply: true });
+    const fullLatency = Date.now() - startTime;
 
-    // Utility function for getting appropriate status emojis
-    const getMsEmoji = (ms) => {
-      let emoji = undefined;
-
-      for (const [ key, value ] of Object.entries({
-        250: '🟢',
-        500: '🟡',
-        1000: '🟠'
-      })) if (ms <= key) {
-        emoji = value;
-        break;
-      }
-      return (emoji ??= '🔴');
+    // Function for latency emoji and visual indicator
+    const getLatencyEmoji = (ms) => {
+      if (ms <= 100) return '🟢';
+      if (ms <= 250) return '🟡';
+      if (ms <= 500) return '🟠';
+      return '🔴';
     };
 
-    // Memory Variables
-    const memoryUsage = process.memoryUsage();
-    const memoryUsedInMB = memoryUsage.heapUsed / BYTES_IN_KIB / BYTES_IN_KIB;
-    const memoryAvailableInMB = memoryUsage.heapTotal
-      / BYTES_IN_KIB / BYTES_IN_KIB;
-    const objCacheSizeInMB = memoryUsage.external / BYTES_IN_KIB / BYTES_IN_KIB;
+    const getLatencyBar = (ms) => {
+      const bars = 10;
+      const filled = Math.min(Math.floor(ms / 100), bars);
+      return '█'.repeat(filled) + '░'.repeat(bars - filled);
+    };
 
-    // Replying to the interaction with our embed data
-    interaction.editReply({
-      content: '\u200b',
+    // Memory + CPU info - More detailed
+    const memory = process.memoryUsage();
+    const usedMB = (memory.heapUsed / BYTES_IN_KIB / BYTES_IN_KIB).toFixed(2);
+    const totalMB = (os.totalmem() / BYTES_IN_KIB / BYTES_IN_KIB).toFixed(2);
+    const freeMB = (os.freemem() / BYTES_IN_KIB / BYTES_IN_KIB).toFixed(2);
+    const memoryUsagePercent = ((memory.heapUsed / os.totalmem()) * 100).toFixed(1);
+    
+    // CPU Load - More accurate
+    const cpuLoad = os.loadavg();
+    const cpuCores = os.cpus().length;
+    const cpuUsagePercent = ((cpuLoad[0] / cpuCores) * 100).toFixed(1);
+
+    // Uptime
+    const uptime = msToHumanReadableTime(Date.now() - client.readyTimestamp);
+    const systemUptime = msToHumanReadableTime(os.uptime() * 1000);
+
+    // User & Server stats
+    const totalUsers = client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0);
+    const totalGuilds = client.guilds.cache.size;
+    const totalChannels = client.channels.cache.size;
+    const totalEmojis = client.emojis.cache.size;
+    const totalCommands = client.commands?.size ?? 0;
+
+    // Platform + Host info
+    const platform = os.type();
+    const arch = os.arch();
+    const node = process.version;
+    const hostname = os.hostname();
+
+    // Memory usage visualization
+    const getMemoryBar = (used, total) => {
+      const percentage = (used / total) * 100;
+      const bars = 10;
+      const filled = Math.min(Math.floor(percentage / 10), bars);
+      return '█'.repeat(filled) + '░'.repeat(bars - filled);
+    };
+
+    // Create visual ping circle
+    const getPingCircle = (ms) => {
+      const max = 500; // Max ping for full circle
+      const segments = 8;
+      const filled = Math.min(Math.floor((ms / max) * segments), segments);
+      return '●'.repeat(filled) + '○'.repeat(segments - filled);
+    };
+
+    // Main Embed
+    await interaction.editReply({
+      content: '',
       embeds: [
         {
           color: colorResolver(),
           author: {
-            name: `${ client.user.username }`,
+            name: `${client.user.username} System Stats`,
             iconURL: client.user.displayAvatarURL()
           },
+          description: stripIndents`
+            **📊 Real-time Performance**
+            ${getPingCircle(latency)} **Ping Status**
+
+            **🌐 Network Latency**
+            ${getLatencyBar(latency)} ${getLatencyEmoji(latency)} **API:** ${latency}ms
+            ${getLatencyBar(fullLatency)} ⏱️ **Full:** ${fullLatency}ms
+
+            **⏰ Uptime**
+            🕒 **Bot:** ${uptime}
+            💻 **System:** ${systemUptime}
+          `,
           fields: [
             {
-              name: 'Latency',
+              name: '💾 Memory Usage',
               value: stripIndents`
-                ${ getMsEmoji(latency) } **API Latency:** ${ latency } ms
-                ${ getMsEmoji(fcLatency) } **Full Circle Latency:** ${ fcLatency } ms
+                ${getMemoryBar(memory.heapUsed, os.totalmem())} **${memoryUsagePercent}%**
+                **Used:** ${usedMB}MB / ${totalMB}MB
+                **Free:** ${freeMB}MB
               `,
               inline: true
             },
             {
-              name: 'Memory',
+              name: '⚡ CPU Performance',
               value: stripIndents`
-                💾 **Memory Usage:** ${ memoryUsedInMB.toFixed(2) }/${ memoryAvailableInMB.toFixed(2) } MB 
-                ♻️ **Cache Size:** ${ objCacheSizeInMB.toFixed(2) } MB
+                **Load (1/5/15min):** ${cpuLoad[0]}/${cpuLoad[1]}/${cpuLoad[2]}
+                **Usage:** ${cpuUsagePercent}%
+                **Cores:** ${cpuCores}
               `,
               inline: true
             },
             {
-              name: 'Uptime',
-              value: stripIndents`**📊 I've been online for ${ msToHumanReadableTime(Date.now() - client.readyTimestamp) }**`,
+              name: '🌍 System Information',
+              value: stripIndents`
+                **Platform:** ${platform} ${arch}
+                **Host:** ${hostname}
+                **Node.js:** [${node}](${nodeVersionDocLink})
+                **Discord.js:** [v${discordVersion}](${discordVersionDocLink})
+              `,
               inline: false
             },
             {
-              name: 'System',
+              name: '📊 Discord Statistics',
               value: stripIndents`
-                ⚙️ **Discord.js Version:** [v${ discordVersion }](${ discordVersionDocLink })
-                ⚙️ **Node Version:** [${ process.version }](${ nodeVersionDocLink })
+                **🏠 Servers:** ${totalGuilds.toLocaleString('en-US')}
+                **💬 Channels:** ${totalChannels.toLocaleString('en-US')}
+                **👥 Users:** ${totalUsers.toLocaleString('en-US')}
               `,
               inline: true
             },
             {
-              name: 'Stats',
+              name: '📦 Cached Data',
               value: stripIndents`
-                👪 **Servers:** ${ client.guilds.cache.size.toLocaleString('en-US') }
-                🙋 **Users:** ${ client.guilds.cache.reduce((previousValue, currentValue) => previousValue += currentValue.memberCount, 0).toLocaleString('en-US') }
+                **🎭 Emojis:** ${totalEmojis.toLocaleString('en-US')}
+                **⚙️ Commands:** ${totalCommands.toLocaleString('en-US')}
+                **👤 Users:** ${client.users.cache.size.toLocaleString('en-US')}
               `,
               inline: true
+            },
+            {
+              name: '📈 Performance Metrics',
+              value: stripIndents`
+                **Shard:** ${interaction.guild?.shardId ?? 0}/${client.ws.shards.size}
+                **WS Events/sec:** ${client.ws.ping ? 'Active' : 'N/A'}
+                **Voice Connections:** ${client.voice?.adapters?.size || 0}
+              `,
+              inline: false
             }
           ],
-          footer: { text: `Made with ❤️ by RasaVedic#0001 ${ emojis.separator } Open to collaborate ${ emojis.separator } me@RasaVedic.dev` }
+          footer: {
+            text: `Made with ❤️ by RasaVedic#0001 ${emojis.separator || '•'} ${new Date().toLocaleDateString()}`
+          },
+          timestamp: new Date(),
+          thumbnail: {
+            url: client.user.displayAvatarURL()
+          }
         }
       ]
     });
