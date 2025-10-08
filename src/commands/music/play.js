@@ -269,6 +269,18 @@ module.exports = new ChatInputCommand({
 
             if (nowPlayingMessage) {
               queue.currentMessage = nowPlayingMessage;
+              
+              // Auto-delete now playing message based on guild settings
+              const settings = await getGuildSettings(guild.id);
+              if (settings.autoDeleteDuration && settings.autoDeleteDuration > 0) {
+                setTimeout(async () => {
+                  try {
+                    await nowPlayingMessage.delete().catch(() => {});
+                  } catch (e) {
+                    // Ignore deletion errors
+                  }
+                }, settings.autoDeleteDuration * 1000);
+              }
             }
 
             // Delete the initial "Added To Queue" message to keep chat clean
