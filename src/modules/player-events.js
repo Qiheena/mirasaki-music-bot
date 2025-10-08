@@ -19,22 +19,34 @@ async function playNextTrack(client, guildId, queue, player) {
     // Check autoplay using the saved previous track
     if (!nextTrack && queue.autoplay && previousTrack) {
       try {
-        logger.debug(`Autoplay enabled, searching for similar songs based on: ${previousTrack.info.title}`);
+        logger.debug(`Autoplay enabled, searching for similar songs based on: ${previousTrack.info.author}`);
         const node = [...client.lavalink.nodes.values()].find(n => n.state === 2);
         if (node) {
-          const searchQuery = `${previousTrack.info.author} ${previousTrack.info.title}`;
+          // Search by artist name only to get related songs, not the same song
+          const searchQuery = `${previousTrack.info.author}`;
           const result = await node.rest.resolve(`ytsearch:${searchQuery}`);
           
           if (result && result.data && result.data.length > 1) {
-            const recommendedTrack = result.data[1];
-            nextTrack = {
-              track: recommendedTrack.encoded,
-              info: recommendedTrack.info,
-              requester: previousTrack.requester
-            };
-            queue.add(nextTrack);
-            nextTrack = queue.next();
-            logger.success(`Autoplay: Added "${nextTrack.info.title}" to queue`);
+            // Filter out the exact same title and pick a random song from top results
+            const availableTracks = result.data.filter(track => 
+              track.info.title.toLowerCase() !== previousTrack.info.title.toLowerCase()
+            ).slice(0, 10); // Take top 10 different songs
+            
+            if (availableTracks.length > 0) {
+              // Pick a random track from available options
+              const randomIndex = Math.floor(Math.random() * Math.min(availableTracks.length, 5));
+              const recommendedTrack = availableTracks[randomIndex];
+              nextTrack = {
+                track: recommendedTrack.encoded,
+                info: recommendedTrack.info,
+                requester: previousTrack.requester
+              };
+              queue.add(nextTrack);
+              nextTrack = queue.next();
+              logger.success(`Autoplay: Added "${nextTrack.info.title}" by ${nextTrack.info.author} to queue`);
+            } else {
+              logger.debug('Autoplay: No different songs found');
+            }
           } else {
             logger.debug('Autoplay: Not enough search results found');
           }

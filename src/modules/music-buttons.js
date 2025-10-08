@@ -25,6 +25,10 @@ function createMusicControlButtons(guildId, isPlaying = false, isPaused = false,
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
+      .setCustomId('shuffle')
+      .setLabel('Shuffle')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
       .setCustomId('volume-down')
       .setLabel('Vol -')
       .setStyle(ButtonStyle.Secondary),

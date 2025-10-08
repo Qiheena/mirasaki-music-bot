@@ -3,6 +3,7 @@ const { requireSessionConditions } = require('../../modules/music');
 const { useQueue } = require('discord-player');
 const { createMusicControlButtons } = require('../../modules/music-buttons');
 const { createSuccessEmbed, createErrorEmbed } = require('../../modules/embed-utils');
+const { autoDeleteReply } = require('../../modules/auto-delete');
 
 module.exports = new ComponentCommand({
   run: async (client, interaction) => {
@@ -20,7 +21,9 @@ module.exports = new ComponentCommand({
         
         if (!queue || !player) {
           const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
-          return interaction.editReply({ embeds: [errorEmbed] });
+          await interaction.editReply({ embeds: [errorEmbed] });
+          await autoDeleteReply(interaction, 10000);
+          return;
         }
 
         const loopModes = ['off', 'track', 'queue'];
@@ -48,11 +51,14 @@ module.exports = new ComponentCommand({
         
         const successEmbed = createSuccessEmbed(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
         await interaction.editReply({ embeds: [successEmbed] });
+        await autoDeleteReply(interaction, 10000);
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
           const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
-          return interaction.editReply({ embeds: [errorEmbed] });
+          await interaction.editReply({ embeds: [errorEmbed] });
+          await autoDeleteReply(interaction, 10000);
+          return;
         }
 
         const currentMode = queue.repeatMode;
@@ -80,10 +86,12 @@ module.exports = new ComponentCommand({
         
         const successEmbed = createSuccessEmbed(`${ emojis.success } ${ member }, loop mode: **${ modeText }**`);
         await interaction.editReply({ embeds: [successEmbed] });
+        await autoDeleteReply(interaction, 10000);
       }
     } catch (e) {
       const errorEmbed = createErrorEmbed(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
-      interaction.editReply({ embeds: [errorEmbed] });
+      await interaction.editReply({ embeds: [errorEmbed] });
+      await autoDeleteReply(interaction, 15000);
     }
   }
 });

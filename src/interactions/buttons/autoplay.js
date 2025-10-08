@@ -2,6 +2,7 @@ const { ComponentCommand } = require('../../classes/Commands');
 const { requireSessionConditions } = require('../../modules/music');
 const { useQueue } = require('discord-player');
 const { createMusicControlButtons } = require('../../modules/music-buttons');
+const { autoDeleteMessage } = require('../../modules/auto-delete');
 
 module.exports = new ComponentCommand({
   run: async (client, interaction) => {
@@ -16,7 +17,9 @@ module.exports = new ComponentCommand({
         const player = client.players.get(guild.id);
         
         if (!queue) {
-          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          const reply = await interaction.reply({ content: `${ emojis.error } ${ member }, no active music session - this command has been cancelled`, fetchReply: true });
+          await autoDeleteMessage(reply, 10000);
+          return;
         }
 
         queue.autoplay = !queue.autoplay;
@@ -37,11 +40,14 @@ module.exports = new ComponentCommand({
           }
         }
         
-        await interaction.reply(`${ emojis.success } ${ member }, autoplay has been **${ queue.autoplay ? 'enabled' : 'disabled' }**`);
+        const reply = await interaction.reply({ content: `${ emojis.success } ${ member }, autoplay has been **${ queue.autoplay ? 'enabled' : 'disabled' }**`, fetchReply: true });
+        await autoDeleteMessage(reply, 10000);
       } else {
         const queue = useQueue(guild.id);
         if (!queue) {
-          return interaction.reply(`${ emojis.error } ${ member }, no active music session - this command has been cancelled`);
+          const reply = await interaction.reply({ content: `${ emojis.error } ${ member }, no active music session - this command has been cancelled`, fetchReply: true });
+          await autoDeleteMessage(reply, 10000);
+          return;
         }
 
         queue.setRepeatMode(queue.repeatMode === 3 ? 0 : 3);
@@ -64,10 +70,12 @@ module.exports = new ComponentCommand({
           }
         }
         
-        await interaction.reply(`${ emojis.success } ${ member }, autoplay has been **${ isEnabled ? 'enabled' : 'disabled' }**`);
+        const reply = await interaction.reply({ content: `${ emojis.success } ${ member }, autoplay has been **${ isEnabled ? 'enabled' : 'disabled' }**`, fetchReply: true });
+        await autoDeleteMessage(reply, 10000);
       }
     } catch (e) {
-      interaction.reply(`${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`);
+      const reply = await interaction.reply({ content: `${ emojis.error } ${ member }, something went wrong:\n\n${ e.message }`, fetchReply: true });
+      await autoDeleteMessage(reply, 15000);
     }
   }
 });
