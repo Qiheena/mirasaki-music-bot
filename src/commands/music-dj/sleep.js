@@ -8,6 +8,7 @@ const sleepTimers = new Map();
 
 module.exports = new ChatInputCommand({
   global: true,
+  aliases: ['sl'],
   data: {
     description: 'Set a sleep timer to stop playback after specified duration',
     options: [
