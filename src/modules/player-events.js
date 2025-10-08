@@ -130,16 +130,26 @@ async function playNextTrack(client, guildId, queue, player) {
             queue.currentMessage = nowPlayingMessage;
             
             // Auto-delete now playing message based on guild settings
+            // Only delete if the duration is LESS than the track duration (prevents deleting during playback)
             const { getGuildSettings } = require('./db');
             const settings = await getGuildSettings(guildId);
+            const trackDurationMs = nextTrack.info.length || 0;
+            
             if (settings.autoDeleteDuration && settings.autoDeleteDuration > 0) {
-              setTimeout(async () => {
-                try {
-                  await nowPlayingMessage.delete().catch(() => {});
-                } catch (e) {
-                  logger.debug(`Could not auto-delete now playing message: ${e.message}`);
-                }
-              }, settings.autoDeleteDuration * 1000);
+              const autoDeleteMs = settings.autoDeleteDuration * 1000;
+              
+              // Only auto-delete if:
+              // 1. It's a live stream (no duration) OR
+              // 2. The auto-delete time is AFTER the track ends
+              if (!trackDurationMs || autoDeleteMs >= trackDurationMs) {
+                setTimeout(async () => {
+                  try {
+                    await nowPlayingMessage.delete().catch(() => {});
+                  } catch (e) {
+                    logger.debug(`Could not auto-delete now playing message: ${e.message}`);
+                  }
+                }, autoDeleteMs);
+              }
             }
           }
         } catch (playError) {

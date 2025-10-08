@@ -41,9 +41,31 @@ module.exports = new ChatInputCommand({
   run: async (client, interaction) => {
     const { emojis } = client.container;
     const { member, guild, options } = interaction;
-    const hours = options.getInteger('hours') || 0;
-    const minutes = options.getInteger('minutes') || 0;
-    const seconds = options.getInteger('seconds') || 0;
+    
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    
+    // Check if first argument is a time string (e.g., "30m", "1h30m", "45s")
+    const firstArg = options.getString('hours');
+    
+    if (firstArg && typeof firstArg === 'string' && /[hms]/.test(firstArg)) {
+      // Parse time string format like "30m" or "1h30m45s"
+      const timeString = firstArg.toLowerCase();
+      
+      const hourMatch = timeString.match(/(\d+)h/);
+      const minuteMatch = timeString.match(/(\d+)m/);
+      const secondMatch = timeString.match(/(\d+)s/);
+      
+      if (hourMatch) hours = parseInt(hourMatch[1]);
+      if (minuteMatch) minutes = parseInt(minuteMatch[1]);
+      if (secondMatch) seconds = parseInt(secondMatch[1]);
+    } else {
+      // Use separate options (slash command format)
+      hours = options.getInteger('hours') || 0;
+      minutes = options.getInteger('minutes') || 0;
+      seconds = options.getInteger('seconds') || 0;
+    }
 
     // Check state
     if (!requireSessionConditions(interaction, true)) return;
